@@ -1,0 +1,7 @@
+https://www.encodedna.com/javascript/dynamically-add-remove-rows-to-html-table-using-javascript-and-save-data.htm
+https://socket.io/get-started/basic-crud-application/
+https://socket.io/get-started/
+https://socket.io/get-started/chat
+https://www.smashingmagazine.com/2016/07/how-to-use-arguments-and-parameters-in-ecmascript-6/
+https://javascript.info/class
+https://www.youtube.com/watch?v=MfxBfRD0FVU
