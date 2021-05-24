@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const app = express();
 const http = require('http');
 const server = http.createServer(app);
@@ -7,6 +8,12 @@ const io = new Server(server);
 const db = require('./db/db');
 const bodyParser = require('body-parser');
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Methods","*");
+  next();
+});
 app.use(bodyParser.json());
 
 app.get('/', (req, res) => {
@@ -24,7 +31,7 @@ app.get('/api/clients', async (req, res) => {
   }
 });
 
-app.get('/api/atendimentos', async (req, res) => {
+app.get('/api/atendimentos', async (req, res, next) => {
   try {
     const atendimentos = await db.getAllAtendimentos();
     res.json(atendimentos);

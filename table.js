@@ -5,6 +5,7 @@ class Table {
     this.columns = this.checkCols(['Num', 'Cliente', '# Ticket', 'Data - Atendimento', 'Data - Retorno', 'Plataforma', 'Observação']);
     this.parentElement = this.checkSelector('#table-wrapper');
     this.clients = [];
+    this.apiURL = 'http://192.168.10.104:3000/';
   }
 
   /**
@@ -43,7 +44,7 @@ class Table {
    */
 
   async fetchClients() {
-    var clients_list = await fetch('http://localhost:3000/api/clients')
+    var clients_list = await fetch(this.apiURL + 'api/clients')
     .then((res) => res.json())
     .then((r) => {
       var clients_list = [];
@@ -112,7 +113,7 @@ class Table {
 
     // pega atendimentos cadastrados no banco
 
-    var existingRows = await fetch('http://localhost:3000/api/atendimentos')
+    var existingRows = await fetch(this.apiURL + 'api/atendimentos')
     .then((res) => res.json())
     .then((r) => {
       var atendimentos = [];
@@ -162,7 +163,7 @@ class Table {
                 span.innerHTML = 'Salvando...';
 
                 // fetch para alterar valor do atendimento
-                fetch(`http://localhost:3000/api/atendimentos/${atendimento_id}`, {
+                fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
                   method: 'PUT',
                   headers: {
                     'Content-Type':'application/json'
@@ -285,7 +286,7 @@ class Table {
 
         // adicionar lógica para envio do post
 
-        fetch('http://localhost:3000/api/atendimentos', {
+        fetch(this.apiURL + 'api/atendimentos', {
           method: 'POST',
           body: JSON.stringify(atdPayload),
           headers: {
