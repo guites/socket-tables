@@ -1,94 +1,122 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta encoding="UTF-8">
     <title>To-do list</title>
-    <style>
-      body { margin: 0; padding-bottom: 3rem; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-
-      #form { background: rgba(0, 0, 0, 0.15); padding: 0.25rem; position: fixed; bottom: 0; left: 0; right: 0; display: flex; height: 3rem; box-sizing: border-box; backdrop-filter: blur(10px); }
-      #input { border: none; padding: 0 1rem; flex-grow: 1; border-radius: 2rem; margin: 0.25rem; }
-      #input:focus { outline: none; }
-      #form > button {
-        background: #333;
-        border: none;
-        padding: 0 1rem;
-        margin: 0.25rem;
-        border-radius: 3px;
-        outline: none;
-        color: #fff;
-        cursor: pointer;
-        transition: all 0.1 ease;
-      }
-      #form > button:hover {
-        background: #111;
-        color:#fff;
-      }
-
-      #messages { list-style-type: none; margin: 0; padding: 0; }
-      #messages > li { padding: 0.5rem 1rem; }
-      #messages > li:nth-child(odd) { background: #efefef; }
-    </style>
+    <link rel="stylesheet" href="bootstrap.min.css">
   </head>
-  <body>
-    <table>
-      <caption>Atendimentos</caption>
-      <thead>
-        <tr>
-          <th scope="col">Num</th>
-          <th scope="col">Cliente</th>
-          <th scope="col">Atendimento</th>
-          <th scope="col">Data de Atendimento</th>
-          <th scope="col">Data de retorno</th>
-          <th scope="col">Número OS</th>
-          <th scope="col">Plataforma de atendimento</th>
-          <th scope="col">Plataforma de atendimento</th>
-          <th scope="col">Observação</th>
-        </tr>
-      </thead>
-      <tfoot>
-        <tr>
-          <td colspan="9">
-            <button id="addRowBtn" type="button">Adicionar nova linha</button>
-          </td>
-        </tr>
-      </tfoot>
-    </table>
-    <ul id="messages"></ul>
-    <form id="form" action="">
-      <input id="input" autocomplete="off" />
-      <button type="submit">Enviar</button>
-    </form>
+  <body style="padding-top:120px;">
+    <div class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
+      <div class="container">
+        <span class="navbar-brand">Astrusweb</span>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+          <ul class="navbar-nav">
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" id="themes" aria-expanded="false">Locaweb <span class="caret"></span></a>
+              <div class="dropdown-menu" aria-labelledby="locaweb">
+                <a class="dropdown-item" href="../default/">cpanel</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="../cerulean/">admin</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="../cerulean/">central do cliente</a>
+              </div>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="https://faq.astrusweb.com">FAQ</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="https://app.sortweb.me/">Sortweb</a>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" id="Dataware" aria-expanded="false">Dataware <span class="caret"></span></a>
+              <div class="dropdown-menu" aria-labelledby="Dataware">
+                <a class="dropdown-item" rel="noopener" target="_blank" href="http://atendimento.dataware.com.br/">Atendimentos</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="https://web.dataware.com.br/" rel="noopener" target="_blank">E-mails</a>
+              </div>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" id="Planilhas" aria-expanded="false">Planilhas <span class="caret"></span></a>
+              <div class="dropdown-menu" aria-labelledby="Planilhas">
+                <a class="dropdown-item" rel="noopener" target="_blank" href="https://docs.google.com/spreadsheets/d/1iA-KJCmlkqRiAJm0osTSOtcjDfIhEVjrgkOYNwtlEcI/edit?usp=sharing">Pagamento - Domínios</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="https://docs.google.com/spreadsheets/d/1lWzcyJ5097hO8R-9g99GV5Wu27Plzg1Y9XW57i68U1o/edit?usp=sharing" rel="noopener" target="_blank">Leads - Novos clientes</a>
+              </div>
+            </li>
+          </ul>
+          <ul class="navbar-nav ms-md-auto">
+            <li class="nav-item">
+              <a target="_blank" rel="noopener" class="nav-link" href="https://repositorio.astrusweb.com/">Repositório</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class='container'>
+      <div class="page-header">
+        <div class="row">
+          <div class="col-lg-8 col-md-7 col-sm-6">
+            <h1>Atendimentos</h1>
+            <p class="lead">Listagem dos atendimentos do desenvolvimento</p>
+          </div> 
+          <div class="col-lg-2 col-md-5 col-sm-6 d-flex align-items-center justify-content-center flex-row">
+            <p id="active-users" class="mb-0 text-info">
+              <span id="active-users-count">1</span> usuário(s) online.
+            </p>
+            <div style="width:15px; height:15px; border-radius:80%;" class="progress">
+              <div class="progress-bar progress-bar-striped bg-success progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <section id="table-wrapper"></section>
+      <div class='row'>
+        <div class='col-lg-4'>
+          <figure>
+            <blockquote class="blockquote">
+              <p class="mb-0">Proibido visualizar e não responder.</p>
+
+            </blockquote>
+            <figcaption class="blockquote-footer">
+              Pessoa que já deixou <cite title="Source Title">os clientes putos</cite>
+            </figcaption>
+          </figure>
+        </div>
+        <div class='col-lg-4'>
+          <figure>
+            <blockquote class="blockquote">
+              <p class="mb-0">Sempre peça para enviar por e-mail.</p>
+
+            </blockquote>
+            <figcaption class="blockquote-footer">
+              Pessoa que já se viu acusada <cite title="Source Title">sem provas</cite>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
     <script src="/socket.io/socket.io.js"></script>
-    <script src="table.js"></script>
+    <script src="./socket.js"></script>
+    <script src="./table.js"></script>
     <script>
-      // socket io logic start
-      var socket = io();
+      var s = new Socket();
+      var table = new Table(s);
 
-      var form = document.getElementById('form');
-      var input = document.getElementById('input');
+      s.socket.on('user count', (total) => s.updateUserCounter(total));
+      s.socket.on('novo atendimento', (newAtd) => table.appendExistingRows([newAtd]));
 
-      form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        if (input.value) {
-          socket.emit('chat message', input.value);
-          input.value = '';
-        }
-      });
-
-      socket.on('chat message', function(msg) {
-        var item = document.createElement('li');
-        item.textContent = msg;
-        messages.appendChild(item);
-        window.scrollTo(0, document.body.scrollheight);
-      });
-      // socket io logic end
-
-      // table logic start
-
-      var addRowBtn = document.getElementById('addRowBtn');
-      addRowBtn.addEventListener('click', addNewRow);
-
-      // table logic end
+      table.createTable();
+      table.loadRowsFromDatabase();
+      var addRowBtn = table.addNewRow('#addRowBtn');
     </script>
   </body>
 </html>
