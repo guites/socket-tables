@@ -143,10 +143,42 @@ class Table {
         if (idx === 0) {
           var td = document.createElement('th');
           td.scope = "row";
+          td.innerHTML = cell;
+        } else if (idx === 6) {
+          var td = document.createElement('td');
+          var textarea = document.createElement('textarea');
+          textarea.value = cell;
+          textarea.className = 'form-control border';
+          textarea.setAttribute('data-atendimentoid', row[0]);
+          var span = document.createElement('span');
+          span.className = 'text-info';
+          td.appendChild(textarea);
+          td.appendChild(span);
+          textarea.addEventListener('focusin', (e) => {
+            var initial_val = e.target.value;
+            textarea.addEventListener('blur', (e) => {
+              if (initial_val != e.target.value) {
+                var atendimento_id = row[0];
+                span.innerHTML = 'Salvando...';
+
+                // fetch para alterar valor do atendimento
+                fetch(`http://localhost:3000/api/atendimentos/${atendimento_id}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type':'application/json'
+                  },
+                  body: JSON.stringify({column: "obs", value: e.target.value})
+                })
+                  .then((res) => {
+                    console.log(res);
+                  });
+              }
+            })
+          });
         } else {
           var td = document.createElement('td');
+          td.innerHTML = cell;
         }
-        td.innerHTML = cell;
         tr.appendChild(td);
       });
     });
@@ -223,7 +255,7 @@ class Table {
     button.addEventListener('click', (e) => {
       var atdPayload = {};
       var allValid = true;
-      var inputs = document.querySelectorAll('tr.new-atendimento input');
+      var inputs = document.querySelectorAll('tr.new-atendimento input, tr.new-atendimento textarea');
       for (var x = 0; x < inputs.length; x++) {
         var validation = this.validateInput(inputs[x]);
         if (!validation.valid) {
@@ -245,26 +277,6 @@ class Table {
           }
         }
       }
-
-     // inputs.forEach((input) => {
-     //   var validation = this.validateInput(input);
-     //   if (!validation.valid) {
-     //     input.classList.add('is-invalid');
-     //     errorWrapper.innerHTML = validation.message;
-     //     allValid = false;
-     //   } else {
-     //     if (input.classList.contains('is-invalid')) {
-     //       input.classList.remove('is-invalid');
-     //     }
-     //     input.classList.add('is-valid');
-     //     if (input.name == 'client_id') {
-     //       atdPayload[input.name] = input.getAttribute('data-clientid');
-     //       atdPayload['name'] = input.value;
-     //     } else {
-     //       atdPayload[input.name] = input.value;
-     //     }
-     //   }
-     // });
 
       if (allValid) {
         console.log(allValid);
@@ -351,10 +363,12 @@ class Table {
           case "num":
             input.disabled = "true";
             input.name = "id";
+            input.type = "hidden";
             break;
           case "# ticket":
             input.disabled = "true";
             input.name = "ticket";
+            input.type = "hidden";
             break;
           case "data - atendimento":
             input.type = "date";
@@ -382,8 +396,11 @@ class Table {
             input.required = "true";
             break;
           case "observação":
+            var input = document.createElement('textarea');
+            input.rows = 1;
+            input.placeholder = col;
+            input.className = "form-control";
             input.name = "obs";
-            input.type = "text";
             input.required = "true";
             break;
           default:

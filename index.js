@@ -34,7 +34,23 @@ app.get('/api/atendimentos', async (req, res) => {
   }
 });
 
+app.put('/api/atendimentos/:id', async(req, res) => {
+  try {
+    const updated = await db.updateAtendimento(
+      req.params.id,
+      req.body.column,
+      req.body.value
+    );
+    console.log(updated);
+    return res.json(updated);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Erro ao interagir com banco de dados.");
+  }
+});
+
 app.post('/api/atendimentos', async (req, res) => {
+  console.log(req.body);
   try {
     const newAtd = await db.insertAtendimento(req.body);
     return res.json({
@@ -50,16 +66,19 @@ app.post('/api/atendimentos', async (req, res) => {
       ]
     });
   } catch(err) {
-    const payLoadKeys = Object.keys(req.body);
-    for (var i = 0; i < payLoadKeys.length; i ++) {
-      if (err.sqlMessage.indexOf(payLoadKeys[i]) !== -1) {
-        res.status(400).json({
-          "error": err.sqlMessage,
-          "info": `Verifique o preenchimento do campo ${payLoadKeys[i]}.`
-        });
-        break;
+    if (err.sqlMessage) {
+      const payLoadKeys = Object.keys(req.body);
+      for (var i = 0; i < payLoadKeys.length; i ++) {
+        if (err.sqlMessage.indexOf(payLoadKeys[i]) !== -1) {
+          res.status(400).json({
+            "error": err.sqlMessage,
+            "info": `Verifique o preenchimento do campo ${payLoadKeys[i]}.`
+          });
+          break;
+        }
       }
     }
+    console.log(err);
   }
 });
 

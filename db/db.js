@@ -22,6 +22,22 @@ async function getAllAtendimentos() {
   return atendimentos;
 }
 
+async function updateAtendimento(id, column, value) {
+  // acho que não consigo setar o nome da coluna de forma dinâmica
+  let column_name;
+  switch (column) {
+    case "plataforma":
+      column_name = "plataforma";
+      break;
+    default:
+      column_name = "obs";
+  }
+  const atendimento = await query(
+    `UPDATE atendimentos SET ${column_name} = ? WHERE id = ?`,
+    [value, id]
+  );
+}
+
 
 async function insertAtendimento(atd) {
   const newAtd = await query (
@@ -33,5 +49,6 @@ async function insertAtendimento(atd) {
 module.exports = {
   getAllClients,
   getAllAtendimentos,
-  insertAtendimento
+  insertAtendimento,
+  updateAtendimento
 }
