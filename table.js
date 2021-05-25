@@ -11,8 +11,20 @@ class Table {
   /**
    * Funções do socket.io
    */
+
   emitAtendimento(newAtd) {
     s.socket.emit('novo atendimento', newAtd);
+  }
+
+
+  emitAtualizaObs(newObs) {
+
+    /**
+     * newObs.id: data-atendimentoid do textarea
+     * newObs.obs: novo texto da obs
+     */
+
+    s.socket.emit('atualiza obs', newObs);
   }
 
   /**
@@ -151,7 +163,7 @@ class Table {
           textarea.value = cell;
           textarea.className = 'form-control border';
           textarea.setAttribute('data-atendimentoid', row[0]);
-          var span = document.createElement('span');
+          var span = document.createElement('small');
           span.className = 'text-info';
           td.appendChild(textarea);
           td.appendChild(span);
@@ -159,6 +171,8 @@ class Table {
             var initial_val = e.target.value;
             textarea.addEventListener('blur', (e) => {
               if (initial_val != e.target.value) {
+                console.log(initial_val);
+                console.log(e.target.value);
                 var atendimento_id = row[0];
                 span.innerHTML = 'Salvando...';
 
@@ -170,9 +184,29 @@ class Table {
                   },
                   body: JSON.stringify({column: "obs", value: e.target.value})
                 })
-                  .then((res) => {
-                    console.log(res);
-                  });
+                .then((response) => {
+                  if (!response.ok) {
+                    return Promise.reject(response);
+                  }
+                  return response.json();
+                })
+                .then((res) => {
+                  if (res.success) {
+                    span.className = 'text-success';
+                    this.emitAtualizaObs({id: atendimento_id, obs: e.target.value});
+                  }
+                  span.innerHTML = res.message;
+                })
+                .catch(async (err) => {
+                  span.className = 'text-danger';
+                  if (typeof err.json === "function") {
+                    const jsonErr = await err.json();
+                    span.innerHTML = jsonErr.message;
+                  } else {
+                    console.log(err);
+                    span.innerHTML = "Erro no servidor.";
+                  } 
+                })
               }
             })
           });
