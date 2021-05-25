@@ -63,6 +63,7 @@ app.put('/api/atendimentos/:id', async(req, res) => {
       req.body.column,
       req.body.value
     );
+    console.log(updated);
     if (updated.affectedRows == 1 && updated.changedRows == 1) {
       return res.json({
         success: true,
@@ -127,6 +128,11 @@ io.on('connection', (socket) => {
 
   var total = io.engine.clientsCount;
   io.emit("user count", total);
+
+  socket.on('add ticket', (addedTicket) => {
+    console.log(addedTicket);
+    socket.broadcast.emit('add ticket', addedTicket);
+  })
 
   socket.on('novo atendimento', (newAtd) => {
     socket.broadcast.emit('novo atendimento', newAtd);

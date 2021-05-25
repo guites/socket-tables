@@ -29,6 +29,9 @@ async function updateAtendimento(id, column, value) {
     case "plataforma":
       column_name = "plataforma";
       break;
+    case "ticket":
+      column_name = "ticket";
+      break;
     default:
       column_name = "obs";
   }
