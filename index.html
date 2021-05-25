@@ -117,6 +117,7 @@
 
       s.socket.on('user count', (total) => s.updateUserCounter(total));
       s.socket.on('novo atendimento', (newAtd) => table.appendExistingRows([newAtd]));
+      s.socket.on('atualiza obs', (newObs) => table.atualizaObs(newObs));
 
       table.createTable();
       table.loadRowsFromDatabase();

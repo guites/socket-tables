@@ -27,6 +27,21 @@ class Table {
     s.socket.emit('atualiza obs', newObs);
   }
 
+  atualizaObs(newObs) {
+
+    /**
+     * Lida com o recebimento da emitAtualizaObs
+     */
+
+    var updated = document.querySelector(`[data-atendimentoid="${newObs.id}"]`);
+    updated.value = newObs.obs;
+    var small = updated.nextElementSibling;
+    if (small) {
+      small.innerHTML = "Atualizado.";
+      small.className = "text-warning";
+    }
+  }
+
   /**
    * Métodos para validar o construtor da classe
    */
