@@ -169,47 +169,49 @@ class Table {
           td.appendChild(span);
           textarea.addEventListener('focusin', (e) => {
             var initial_val = e.target.value;
-            textarea.addEventListener('blur', (e) => {
-              if (initial_val != e.target.value) {
-                console.log(initial_val);
-                console.log(e.target.value);
-                var atendimento_id = row[0];
-                span.innerHTML = 'Salvando...';
-
-                // fetch para alterar valor do atendimento
-                fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
-                  method: 'PUT',
-                  headers: {
-                    'Content-Type':'application/json'
-                  },
-                  body: JSON.stringify({column: "obs", value: e.target.value})
-                })
-                .then((response) => {
-                  if (!response.ok) {
-                    return Promise.reject(response);
-                  }
-                  return response.json();
-                })
-                .then((res) => {
-                  if (res.success) {
-                    span.className = 'text-success';
-                    this.emitAtualizaObs({id: atendimento_id, obs: e.target.value});
-                  }
-                  span.innerHTML = res.message;
-                })
-                .catch(async (err) => {
-                  span.className = 'text-danger';
-                  if (typeof err.json === "function") {
-                    const jsonErr = await err.json();
-                    span.innerHTML = jsonErr.message;
-                  } else {
-                    console.log(err);
-                    span.innerHTML = "Erro no servidor.";
-                  } 
-                })
-              }
-            })
+            e.target.setAttribute('data-initial',initial_val);
           });
+          textarea.addEventListener('blur', (e) => {
+            var blur_initial = e.target.getAttribute('data-initial');
+            var blur_now = e.target.value;
+            if (blur_initial != blur_now) {
+              var atendimento_id = row[0];
+              span.className = 'text-info';
+              span.innerHTML = 'Salvando...';
+
+              // fetch para alterar valor do atendimento
+              fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type':'application/json'
+                },
+                body: JSON.stringify({column: "obs", value: blur_now})
+              })
+              .then((response) => {
+                if (!response.ok) {
+                  return Promise.reject(response);
+                }
+                return response.json();
+              })
+              .then((res) => {
+                if (res.success) {
+                  span.className = 'text-success';
+                  this.emitAtualizaObs({id: atendimento_id, obs: e.target.value});
+                }
+                span.innerHTML = res.message;
+              })
+              .catch(async (err) => {
+                span.className = 'text-danger';
+                if (typeof err.json === "function") {
+                  const jsonErr = await err.json();
+                  span.innerHTML = jsonErr.message;
+                } else {
+                  console.log(err);
+                  span.innerHTML = "Erro no servidor.";
+                } 
+              })
+            }
+          })
         } else {
           var td = document.createElement('td');
           td.innerHTML = cell;
