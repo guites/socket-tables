@@ -40,9 +40,12 @@ async function updateAtendimento(id, column, value) {
 
 
 async function insertAtendimento(atd) {
+  if (atd.ticket == '') {
+    atd.ticket = null;
+  }
   const newAtd = await query (
-    `INSERT INTO atendimentos (client_id, data_atendimento, data_retorno, plataforma, obs) VALUES (?, ?, ?, ?, ?)`,
-    [atd.client_id, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]
+    `INSERT INTO atendimentos (client_id, ticket, data_atendimento, data_retorno, plataforma, obs) VALUES (?, ?, ?, ?, ?, ?)`,
+    [atd.client_id, atd.ticket, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]
   );
   return newAtd;
 }
