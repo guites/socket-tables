@@ -49,10 +49,23 @@ app.put('/api/atendimentos/:id', async(req, res) => {
       req.body.value
     );
     console.log(updated);
-    return res.json(updated);
+    if (updated.affectedRows == 1 && updated.changedRows == 1) {
+      return res.json({
+        success: true,
+        message: "Salvo."
+      });
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Erro ao processar requisição."
+      })
+    }
   } catch (err) {
     console.log(err);
-    res.status(500).send("Erro ao interagir com banco de dados.");
+    res.status(500).send({
+      success: false,
+      message: "Erro ao interagir com banco de dados."
+    });
   }
 });
 
@@ -97,6 +110,10 @@ io.on('connection', (socket) => {
 
   socket.on('novo atendimento', (newAtd) => {
     socket.broadcast.emit('novo atendimento', newAtd);
+  });
+
+  socket.on('atualiza obs', (newObs) => {
+    socket.broadcast.emit('atualiza obs', newObs);
   });
 
   socket.on('disconnect', () => {

@@ -36,6 +36,7 @@ async function updateAtendimento(id, column, value) {
     `UPDATE atendimentos SET ${column_name} = ? WHERE id = ?`,
     [value, id]
   );
+  return atendimento;
 }
 
 
