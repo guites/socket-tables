@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 const config = require('./config');
 
-async function query(sql, params) {
+async function query(sql, params = null) {
   const connection = await mysql.createConnection(config);
   const [results, ] = await connection.execute(sql, params);
   return results;
@@ -9,8 +9,7 @@ async function query(sql, params) {
 
 async function getAllClients() {
   const clients = await query(
-    `SELECT sort_id as id, name FROM clientes WHERE active = ?`,
-    [1]
+    `SELECT sort_id as id, name FROM clientes`,
   );
   return clients;
 }
