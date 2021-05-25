@@ -8,6 +8,20 @@ const io = new Server(server);
 const db = require('./db/db');
 const bodyParser = require('body-parser');
 
+function clientErrorHandler (err, req, res, next) {
+  console.log(req.xhr);
+  console.log(err);
+  if (req.xhr) {
+    res.status(500).send({ error: 'Something failed!' })
+  } else {
+    if (res.type = 'entity.too.large') {
+      res.status(413).json({success:false, message:'Campo muito grande!'})
+    } else {
+      next(err);
+    }
+  }
+}
+
 app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -15,6 +29,7 @@ app.use(function(req, res, next) {
   next();
 });
 app.use(bodyParser.json());
+app.use(clientErrorHandler);
 
 app.get('/', (req, res) => {
   app.use(express.static(__dirname));
@@ -48,7 +63,6 @@ app.put('/api/atendimentos/:id', async(req, res) => {
       req.body.column,
       req.body.value
     );
-    console.log(updated);
     if (updated.affectedRows == 1 && updated.changedRows == 1) {
       return res.json({
         success: true,
@@ -62,6 +76,12 @@ app.put('/api/atendimentos/:id', async(req, res) => {
     }
   } catch (err) {
     console.log(err);
+    if (err.code == 'ER_DATA_TOO_LONG') {
+      res.status(400).send({
+        success: false,
+        message: `Campo ${req.body.column} muito grande!`
+      })
+    }
     res.status(500).send({
       success: false,
       message: "Erro ao interagir com banco de dados."
@@ -113,6 +133,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('atualiza obs', (newObs) => {
+    console.log(newObs);
     socket.broadcast.emit('atualiza obs', newObs);
   });
 
