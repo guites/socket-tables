@@ -5,7 +5,7 @@ class Table {
     this.columns = this.checkCols(['Num', 'Cliente', '# Ticket', 'Data - Atendimento', 'Data - Retorno', 'Plataforma', 'Observação']);
     this.parentElement = this.checkSelector('#table-wrapper');
     this.clients = [];
-    this.apiURL = 'http://192.168.10.104:3000/';
+    this.apiURL = 'http://localhost:3000/';
   }
 
   /**
@@ -212,9 +212,29 @@ class Table {
     }
     switch (input.name) {
       case "ticket":
-        if (input.value != '') {
-          validation.valid = false;
-          validation.message = "O valor do ticket não pode ser preenchido manualmente.";
+        var val = input.value.trim();
+        input.value = val;
+        if (val != '') {
+          if (val.length < 6) {
+            // atendimento ref. a OS já existente
+            validation.valid = false;
+            validation.message = "Digite apenas números no campo <# Ticket>.";
+            var rgx = /\d+/;
+            var match = val.match(rgx);
+            if (match !== null) {
+              if (match.length == 1) {
+                if (match == val) {
+                  validation = {
+                    valid: true,
+                    message: ""
+                  }
+                }
+              }
+            }
+          } else {
+            validation.valid = false;
+            validation.message = "O número do Ticket deve ter menos que 6 dígitos (valor máximo 99999).";
+          }
         }
         break;
       case "id":
@@ -367,9 +387,10 @@ class Table {
             input.type = "hidden";
             break;
           case "# ticket":
-            input.disabled = "true";
+            input.title = "Preencha caso já existir uma OS referente a este atendimento.";
             input.name = "ticket";
-            input.type = "hidden";
+            input.type = "text";
+            input.className = "form-control border border-2 border-info";
             break;
           case "data - atendimento":
             input.type = "date";
@@ -415,6 +436,11 @@ class Table {
           dropdown.className = 'dropdown-menu';
           dropdown.role = "menu";
           td.appendChild(dropdown);
+        } else if (col.toLowerCase().trim() == '# ticket') {
+          var optional = document.createElement('small');
+          optional.className = 'text-info';
+          optional.innerHTML = '**não obrigatório.';
+          td.appendChild(optional);
         }
         tr.appendChild(td);
       });
