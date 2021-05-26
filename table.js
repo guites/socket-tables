@@ -5,7 +5,7 @@ class Table {
     this.columns = this.checkCols(['Num', 'Cliente', '# Ticket', 'Data - Atendimento', 'Data - Retorno', 'Plataforma', 'Observação']);
     this.parentElement = this.checkSelector('#table-wrapper');
     this.clients = [];
-    this.apiURL = 'http://localhost:3000/';
+    this.apiURL = 'http://192.168.10.104:3000/';
   }
 
   /**
@@ -335,7 +335,7 @@ class Table {
             td.appendChild(small);
           } else {
             var td = document.createElement('td');
-            td.innerHTML = cell;
+            td.innerHTML = "<a target='_blank' href='https://app.sortweb.me/tasks/adminTaskView/" + cell + "'>" + cell + "</a>";
           }
         } else {
           var td = document.createElement('td');
