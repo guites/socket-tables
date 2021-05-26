@@ -26,7 +26,8 @@ async function getAllAtendimentos() {
     atd.obs
     FROM atendimentos atd
     INNER JOIN clientes c ON c.sort_id = atd.client_id
-    INNER JOIN status s ON atd.status_id = s.id`
+    INNER JOIN status s ON atd.status_id = s.id
+    ORDER BY atd.id ASC`
   );
   return atendimentos;
 }
