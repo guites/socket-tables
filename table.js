@@ -568,6 +568,7 @@ class Table {
             input.min = todayDate;
             break;
           case "cliente":
+            input.id = "cliente_dropdown";
             input.name = "client_id";
             input.type = "text";
             input.required = "true";
@@ -607,7 +608,7 @@ class Table {
         }
         tr.appendChild(td);
       });
-      var cliente_input = document.querySelector('table > tbody > tr:last-child > td:nth-child(2) input');
+      var cliente_input = document.querySelector('#cliente_dropdown');
 
       // adiciona autoComplete no input "cliente": se eu já tiver utilizado a fetchClients(), pego o que tiver na memória
       if (this.clients.length == 0) this.clients = await this.fetchClients();
