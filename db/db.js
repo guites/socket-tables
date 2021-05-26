@@ -16,7 +16,17 @@ async function getAllClients() {
 
 async function getAllAtendimentos() {
   const atendimentos = await query (
-    `SELECT atd.id, c.name, atd.ticket, DATE_FORMAT(atd.data_atendimento,'%d/%m/%y') as data_atendimento, DATE_FORMAT(atd.data_retorno,'%d/%m/%y') as data_retorno, atd.plataforma, atd.obs FROM atendimentos atd INNER JOIN clientes c ON c.sort_id = atd.client_id`
+    `SELECT atd.id as id,
+    s.name as status,
+    c.name,
+    atd.ticket,
+    DATE_FORMAT(atd.data_atendimento,'%d/%m/%y') as data_atendimento,
+    DATE_FORMAT(atd.data_retorno,'%d/%m/%y') as data_retorno,
+    atd.plataforma,
+    atd.obs
+    FROM atendimentos atd
+    INNER JOIN clientes c ON c.sort_id = atd.client_id
+    INNER JOIN status s ON atd.status_id = s.id`
   );
   return atendimentos;
 }

@@ -2,10 +2,12 @@ class Table {
 
   constructor(s) {
     this.socket = s;
-    this.columns = this.checkCols(['Num', 'Cliente', '# Ticket', 'Data - Atendimento', 'Data - Retorno', 'Plataforma', 'Observação']);
+    this.columns = this.checkCols(
+      ['Num', 'Status', 'Cliente', '# Ticket', 'Data - Atendimento', 'Data - Retorno', 'Plataforma', 'Observação']
+    );
     this.parentElement = this.checkSelector('#table-wrapper');
     this.clients = [];
-    this.apiURL = 'http://192.168.10.104:3000/';
+    this.apiURL = 'http://localhost:3000/';
   }
 
   /**
@@ -165,7 +167,7 @@ class Table {
     .then((r) => {
       var atendimentos = [];
       r.forEach((atd) => {
-        atendimentos.push([atd.id, atd.name, atd.ticket, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]);
+        atendimentos.push([atd.id,atd.status, atd.name, atd.ticket, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]);
       });
       return atendimentos;
     });
@@ -192,7 +194,7 @@ class Table {
           var td = document.createElement('th');
           td.scope = "row";
           td.innerHTML = cell;
-        } else if (idx === 6) {
+        } else if (idx === 7) {
           var td = document.createElement('td');
           var textarea = document.createElement('textarea');
           textarea.value = cell;
@@ -247,7 +249,7 @@ class Table {
               })
             }
           })
-        } else if (idx == 2) {
+        } else if (idx == 3) {
           if (cell === null) {
             var td = document.createElement('td');
             var ticketInput = document.createElement('input');
