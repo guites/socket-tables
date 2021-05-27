@@ -46,6 +46,16 @@ app.get('/api/clients', async (req, res) => {
   }
 });
 
+app.get('/api/status', async (req, res) => {
+  try {
+    const statuses = await db.getAllStatus();
+    res.json(statuses);
+  } catch(err) {
+    console.log(err);
+    res.status(500).send("Erro ao acessar banco de dados.");
+  }
+});
+
 app.get('/api/atendimentos', async (req, res, next) => {
   try {
     const atendimentos = await db.getAllAtendimentos();
@@ -171,6 +181,16 @@ io.on('connection', (socket) => {
   socket.on('atualiza obs', (newObs) => {
     console.log(newObs);
     socket.broadcast.emit('atualiza obs', newObs);
+  });
+
+  socket.on('atualiza status', (newStatus) => {
+    console.log(newStatus);
+    if (parseInt(newStatus.status_id) == 1) {
+      newStatus.status_name = "aberto";
+    } else {
+      newStatus.status_name = "fechado";
+    }
+    socket.broadcast.emit('atualiza status', newStatus);
   });
 
   socket.on('disconnect', () => {
