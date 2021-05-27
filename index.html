@@ -124,6 +124,7 @@
       s.socket.on('novo atendimento', (newAtd) => table.appendExistingRows([newAtd]));
       s.socket.on('atualiza obs', (newObs) => table.atualizaObs(newObs));
       s.socket.on('add ticket', (addedTicket) => table.handleAddTicket(addedTicket));
+      s.socket.on('atualiza status', (newStatus) => table.handleAtualizaStatus(newStatus));
 
       table.createTable();
       table.loadRowsFromDatabase();
