@@ -7,6 +7,7 @@ class Table {
     );
     this.parentElement = this.checkSelector('#table-wrapper');
     this.clients = [];
+    this.statuses = [];
     this.apiURL = 'http://localhost:3000/';
   }
 
@@ -35,6 +36,37 @@ class Table {
     if (small) {
       small.innerHTML = "Atualizado.";
       small.className = "text-warning";
+    }
+  }
+
+  emitAtualizaStatus(newStatus) {
+
+    /**
+     * newStatus.id: id do atendimento
+     * newStatus.status_id: id do status
+     */
+
+    s.socket.emit('atualiza status', newStatus);
+
+  }
+
+  handleAtualizaStatus(newStatus) {
+
+    /**
+     * Lida com o recebimento da emitAtualizaStatus
+     */
+
+    var updated = document.getElementById(`dropdownMenuButton_${newStatus.id}`);
+    updated.innerHTML = newStatus.status_name;
+    var dropdown_menu = updated.nextElementSibling;
+    var small = dropdown_menu.nextElementSibling;
+    console.log(small);
+    if (small) {
+      small.innerHTML = "Atualizado.";
+      small.className = "text-warning";
+    }
+    if (dropdown_menu) {
+      dropdown_menu.innerHTML = '';
     }
   }
 
@@ -86,6 +118,23 @@ class Table {
       }
     });
     return rows;
+  }
+
+  /**
+   * Carrega os status cadastrados no banco
+   */
+
+  async fetchStatus() {
+    var status_list = await fetch(this.apiURL + 'api/status')
+    .then((res) => res.json())
+    .then((s) => {
+      var status_list = [];
+      s.forEach((stat) => {
+        status_list.push(stat);
+      });
+      return status_list;
+    });
+    return status_list;
   }
 
   /**
@@ -180,47 +229,121 @@ class Table {
   }
 
   /**
+   * Helper para readicionar os event listeners
+   * após trocar status do atendimento
+   */
+
+  regenerateStatus() {
+
+  }
+
+  /**
    * Funcionalidade para o campo status na tabela
    */
 
   statusCell(cell, atendimento_id) {
+
     var td = document.createElement('td');
 
-    // cria estrutura do dropdown
-   // var btn_left = document.createElement("button");
-   // btn_left.setAttribute("aria-label", "Dropdown alterar status do atendimento");
-   // btn_left.role="group";
-   // var btn_primary = document.createElement("button");
-   // btn_primary.className("btn btn-primary");
-   // btn_primary.innerHTML = cell;
-   // var btn_right = document.createElement("button");
-   // btn_right.id = "btnGroupDrop1";
-   // btn_right.type = "button";
-   // btn_right.className = "btn btn-primary dropdown-toggle";
-   // btn_right.setAttribute("data-bs-toggle", "dropdown");
-   // btn_right.setAttribute("aria-haspopup", "true");
-   // btn_right.setAttribute("aria-expanded", "false");
-   // var dropdown_menu = document.createElement("div");
-   // dropdown_menu.className = "dropdown-menu";
-   // dropdown_menu.innerHTML = `
-   //     <a class="dropdown-item" href="#">Dropdown link</a>
-   //     <a class="dropdown-item" href="#">Dropdown link</a>
+    var small = document.createElement("small");
+    small.className = 'd-block';
+
+
+    var dropdown = document.createElement('div');
+    dropdown.className = 'dropdown';
+
+    var button = document.createElement("button");
+    button.className = "btn btn-secondary btn-sm dropdown-toggle";
+    button.id = `dropdownMenuButton_${atendimento_id}`;
+    button.setAttribute("data-bs-toggle", "dropdown");
+    button.setAttribute("aria-haspopup", "true");
+    button.setAttribute("aria-expanded", "false");
+    button.innerHTML = cell;
+
+    var dropdown_menu = document.createElement("div");
+    dropdown_menu.style.minWidth = 0;
+    dropdown_menu.style.maxWidth = "5rem";
+    dropdown_menu.className = "dropdown-menu";
+    dropdown_menu.setAttribute("aria-labelledby", "dropdownMenuButton");
+
+    var dropdown_itens_statuses = this.statuses.filter(stts => stts.name != cell);
+
+    dropdown_itens_statuses.forEach((st) => {
+
+      var dropdown_item = document.createElement("div");
+      dropdown_item.id = st.id;
+      dropdown_item.className = "dropdown-item";
+      dropdown_item.style.cursor = "pointer";
+      dropdown_item.style.padding = "0.25rem 0.5rem";
+
+      var span = document.createElement("span");
+      span.innerHTML = st.name;
+      span.style.pointerEvents = "none";
+
+      dropdown_item.appendChild(span);
+
+      dropdown_item.addEventListener("click", (e) => {
+
+        fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type':'application/json'
+          },
+          body: JSON.stringify({column: "status", value: e.target.id})
+        })
+        .then((response) => {
+          if (!response.ok) {
+            return Promise.reject(response);
+          }
+          return response.json();
+        })
+        .then((res) => {
+          if (res.success) {
+
+            small.innerHTML = "Salvo.";
+            small.className = "d-block text-success";
+            button.innerHTML = e.target.firstChild.innerHTML;
+            dropdown_menu.innerHTML = '';
+            this.emitAtualizaStatus({id: atendimento_id, status_id: e.target.id});
+
+            // aqui, eu teria que filtrar novamente dentre os status existentes,
+            // gerar o html dos dropdown_itens e adicionar os event listeners...
+
+          }
+          small.innerHTML = res.message;
+        })
+        .catch(async (err) => {
+          small.className = 'd-block text-danger';
+          if (typeof err.json === "function") {
+            const jsonErr = await err.json();
+            small.innerHTML = jsonErr.message;
+          } else {
+            console.log(err);
+            small.innerHTML = "Erro no servidor.";
+          } 
+        });
+
+      });
+      dropdown_menu.appendChild(dropdown_item);
+    });
+
+
+    td.appendChild(button);
+    td.appendChild(dropdown_menu);
+    td.appendChild(small);
+
+
+
+   // td.innerHTML = `
+   //   <div class="dropdown" >
+   //     <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+   //       ${cell}
+   //     </button>
+   //     <div style="min-width:0; max-width:5rem;" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+   //     ${dropdown_itens}
+   //     </div>
+   //   </div>
    // `;
-   // btn_right.appendChild(dropdown_menu);
-
-
-    td.innerHTML = `
-     <div class="btn-group" role="group" aria-label="">
-       <button type="button" class="btn btn-primary">Primary</button>
-       <div class="btn-group" role="group">
-         <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
-         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
-           <a class="dropdown-item" href="#">Dropdown link</a>
-           <a class="dropdown-item" href="#">Dropdown link</a>
-         </div>
-       </div>
-     </div>
-    `;
 
     return td;
 
@@ -241,8 +364,8 @@ class Table {
       ticketInput.className = 'form-control form-control-sm';
       var btn = document.createElement('button');
       btn.type = "button";
-      btn.className = "btn btn-primary btn-sm d-block";
-      btn.innerHTML = 'add Ticket';
+      btn.className = "btn btn-secondary btn-sm d-block";
+      btn.innerHTML = 'ticket';
       btn.id = `addTicketBtn_${atendimento_id}`;
       var small = document.createElement("small");
       small.className = 'text-info';
@@ -391,11 +514,16 @@ class Table {
    * Adiciona linhas através de um array de arrays
    */
 
-  appendExistingRows(rowsArray) {
+  async appendExistingRows(rowsArray) {
 
     var rows = this.checkRows(rowsArray);
     
     var tbody = document.querySelector('#todo-table > tbody');
+
+    // carrega os status regitrados no banco:
+    // se eu já tiver utilizado a fetchStatus(), pego o que tiver na memória
+    
+    if (this.statuses.length == 0) this.statuses = await this.fetchStatus();
 
     rows.forEach((row) => {
       var tr = tbody.insertRow(-1);
@@ -421,7 +549,7 @@ class Table {
         }
         tr.appendChild(td);
       }
-    });
+    }, this.statuses);
 
   }
 
@@ -573,7 +701,7 @@ class Table {
               formRow.remove();
 
               errorWrapper.className = 'text-info';
-              errorWrapper.innerHTML = `<small>Atendimento de ID ${res.atendimento[0]} adicionado com sucesso.</small>`;
+              errorWrapper.innerHTML = `<small>Atendimento de ID ${res.atendimento.id} adicionado com sucesso.</small>`;
 
               this.emitAtendimento(res.atendimento);
 
