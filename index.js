@@ -90,21 +90,51 @@ app.put('/api/atendimentos/:id', async(req, res) => {
   }
 });
 
+/**
+ * Helper para definir o nome do status, quickfix pra evitar
+ * consulta extra no banco
+ */
+
+function getStatusName(status_id) {
+  let status_name;
+  switch (parseInt(status_id, 10)) {
+    case 1:
+      status_name = "aberto";
+      break
+    case 2:
+      status_name = "fechado";
+      break;
+    default:
+      throw new RangeError("Valor de status inválido");
+  }
+  return status_name;
+}
+
+
 app.post('/api/atendimentos', async (req, res) => {
-  console.log(req.body);
+  try {
+    atd_status = getStatusName(req.body.status);
+  } catch(err) {
+    console.log(err);
+    return res.status(400).json({
+      "error": err.message,
+      "info": "Campo status fora do intervalo permitido"
+    });
+  }
   try {
     const newAtd = await db.insertAtendimento(req.body);
     return res.json({
       success: true,
-      atendimento: [
-        newAtd.insertId,
-        req.body.name,
-        req.body.ticket,
-        req.body.data_atendimento,
-        req.body.data_retorno,
-        req.body.plataforma,
-        req.body.obs
-      ]
+      atendimento: {
+        id: newAtd.insertId,
+        status: atd_status,
+        cliente: req.body.name,
+        ticket: req.body.ticket,
+        data_atendimento: req.body.data_atendimento,
+        data_retorno: req.body.data_retorno,
+        plataforma: req.body.plataforma,
+        obs: req.body.obs
+      }
     });
   } catch(err) {
     if (err.sqlMessage) {
@@ -119,7 +149,7 @@ app.post('/api/atendimentos', async (req, res) => {
         }
       }
     }
-    console.log(err);
+    console.log(err.type);
   }
 });
 
