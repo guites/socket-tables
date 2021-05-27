@@ -24,7 +24,6 @@ class Table {
 
   handleAddTicket(addedTicket) {
 
-    console.log(addedTicket);
     /**
      * Lida com o recebimento da emitAddTicket
      */
@@ -81,7 +80,8 @@ class Table {
       throw new TypeError('rows deve ser um array');
     }
     rows.forEach((row) => {
-      if (row.length != this.columns.length) {
+      const count = Object.keys(row).length;
+      if (count != this.columns.length) {
         throw new Error('as linhas devem ter a mesma quantidade de colunas que o cabeçalho!');
       }
     });
@@ -167,7 +167,8 @@ class Table {
     .then((r) => {
       var atendimentos = [];
       r.forEach((atd) => {
-        atendimentos.push([atd.id,atd.status, atd.name, atd.ticket, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]);
+        //atendimentos.push([atd.id,atd.status, atd.name, atd.ticket, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]);
+        atendimentos.push(atd);
       });
       return atendimentos;
     });
@@ -179,6 +180,214 @@ class Table {
   }
 
   /**
+   * Funcionalidade para o campo status na tabela
+   */
+
+  statusCell(cell, atendimento_id) {
+    var td = document.createElement('td');
+
+    // cria estrutura do dropdown
+   // var btn_left = document.createElement("button");
+   // btn_left.setAttribute("aria-label", "Dropdown alterar status do atendimento");
+   // btn_left.role="group";
+   // var btn_primary = document.createElement("button");
+   // btn_primary.className("btn btn-primary");
+   // btn_primary.innerHTML = cell;
+   // var btn_right = document.createElement("button");
+   // btn_right.id = "btnGroupDrop1";
+   // btn_right.type = "button";
+   // btn_right.className = "btn btn-primary dropdown-toggle";
+   // btn_right.setAttribute("data-bs-toggle", "dropdown");
+   // btn_right.setAttribute("aria-haspopup", "true");
+   // btn_right.setAttribute("aria-expanded", "false");
+   // var dropdown_menu = document.createElement("div");
+   // dropdown_menu.className = "dropdown-menu";
+   // dropdown_menu.innerHTML = `
+   //     <a class="dropdown-item" href="#">Dropdown link</a>
+   //     <a class="dropdown-item" href="#">Dropdown link</a>
+   // `;
+   // btn_right.appendChild(dropdown_menu);
+
+
+    td.innerHTML = `
+     <div class="btn-group" role="group" aria-label="">
+       <button type="button" class="btn btn-primary">Primary</button>
+       <div class="btn-group" role="group">
+         <button id="btnGroupDrop1" type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+         <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+           <a class="dropdown-item" href="#">Dropdown link</a>
+           <a class="dropdown-item" href="#">Dropdown link</a>
+         </div>
+       </div>
+     </div>
+    `;
+
+    return td;
+
+  }
+
+  /**
+   * Funcionalidade para o campo ticket na tabela
+   */
+
+  ticketCell(cell, atendimento_id) {
+
+    if (cell === null) {
+      var td = document.createElement('td');
+      var ticketInput = document.createElement('input');
+      ticketInput.type = 'hidden';
+      ticketInput.name = 'ticket';
+      ticketInput.placeholder = "# Ticket";
+      ticketInput.className = 'form-control form-control-sm';
+      var btn = document.createElement('button');
+      btn.type = "button";
+      btn.className = "btn btn-primary btn-sm d-block";
+      btn.innerHTML = 'add Ticket';
+      btn.id = `addTicketBtn_${atendimento_id}`;
+      var small = document.createElement("small");
+      small.className = 'text-info';
+      btn.addEventListener('click', (e) => {
+        ticketInput.type = "text";
+        btn.classList.add('d-none');
+        ticketInput.focus();
+      });
+      ticketInput.addEventListener('blur', (e) => {
+        if (e.target.value != "") {
+          var validate = this.validateInput(e.target);
+          if (validate.valid) {
+
+            // fetch para adicionar # do ticket
+            
+            fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type':'application/json'
+              },
+              body: JSON.stringify({column: "ticket", value: e.target.value})
+            })
+            .then((response) => {
+              if (!response.ok) {
+                return Promise.reject(response);
+              }
+              return response.json();
+            })
+            .then((res) => {
+              if (res.success) {
+
+                small.innerHTML = "Salvo.";
+                small.className = "text-success";
+                this.bootstrapIt(btn, 'btn btn-light disabled');
+                btn.classList.remove('btn-primary');
+                btn.innerHTML = e.target.value;
+                this.emitAddTicket({id: atendimento_id, ticket: e.target.value});
+
+              }
+              small.innerHTML = res.message;
+            })
+            .catch(async (err) => {
+              small.className = 'text-danger';
+              if (typeof err.json === "function") {
+                const jsonErr = await err.json();
+                small.innerHTML = jsonErr.message;
+              } else {
+                console.log(err);
+                small.innerHTML = "Erro no servidor.";
+              } 
+            });
+
+          } else {
+            switch (validate.message) {
+              case "Digite apenas números no campo <# Ticket>.":
+                small.innerHTML = "Apenas números.";
+                break;
+              case "O número do Ticket deve ter menos que 6 dígitos (valor máximo 99999).":
+                small.innerHTML = "Valor máx. 99999";
+                break;
+              default:
+                small.innerHTML = "Erro!";
+                break;
+            }
+            small.className = "text-warning";
+          }
+        }
+        btn.classList.remove('d-none');
+        ticketInput.type = "hidden";
+      });
+      td.appendChild(ticketInput);
+      td.appendChild(btn);
+      td.appendChild(small);
+    } else {
+      var td = document.createElement('td');
+      td.innerHTML = "<a target='_blank' href='https://app.sortweb.me/tasks/adminTaskView/" + cell + "'>" + cell + "</a>";
+    }
+
+    return td;
+
+  }
+
+  /**
+   * Funcionalidades para o campo observação na tabela 
+   */
+
+  observacaoCell(cell, atendimento_id) {
+
+    var td = document.createElement('td');
+    var textarea = document.createElement('textarea');
+    textarea.value = cell;
+    textarea.className = 'form-control border';
+    textarea.setAttribute('data-atendimentoid', atendimento_id);
+    var span = document.createElement('small');
+    span.className = 'text-info';
+    td.appendChild(textarea);
+    td.appendChild(span);
+    textarea.addEventListener('focusin', (e) => {
+      var initial_val = e.target.value;
+      e.target.setAttribute('data-initial', initial_val);
+    });
+    textarea.addEventListener('blur', (e) => {
+      var blur_initial = e.target.getAttribute('data-initial');
+      var blur_now = e.target.value;
+      if (blur_initial != blur_now) {
+        span.className = 'text-info';
+        span.innerHTML = 'Salvando...';
+
+        // fetch para alterar valor da observação
+        fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type':'application/json'
+          },
+          body: JSON.stringify({column: "obs", value: blur_now})
+        })
+        .then((response) => {
+          if (!response.ok) {
+            return Promise.reject(response);
+          }
+          return response.json();
+        })
+        .then((res) => {
+          if (res.success) {
+            span.className = 'text-success';
+            this.emitAtualizaObs({id: atendimento_id, obs: e.target.value});
+          }
+          span.innerHTML = res.message;
+        })
+        .catch(async (err) => {
+          span.className = 'text-danger';
+          if (typeof err.json === "function") {
+            const jsonErr = await err.json();
+            span.innerHTML = jsonErr.message;
+          } else {
+            console.log(err);
+            span.innerHTML = "Erro no servidor.";
+          } 
+        })
+      }
+    }, atendimento_id);
+    return td;
+  }
+
+  /**
    * Adiciona linhas através de um array de arrays
    */
 
@@ -187,165 +396,33 @@ class Table {
     var rows = this.checkRows(rowsArray);
     
     var tbody = document.querySelector('#todo-table > tbody');
+
     rows.forEach((row) => {
       var tr = tbody.insertRow(-1);
-      row.forEach((cell, idx) => {
-        if (idx === 0) {
-          var td = document.createElement('th');
-          td.scope = "row";
-          td.innerHTML = cell;
-        } else if (idx === 7) {
-          var td = document.createElement('td');
-          var textarea = document.createElement('textarea');
-          textarea.value = cell;
-          textarea.className = 'form-control border';
-          textarea.setAttribute('data-atendimentoid', row[0]);
-          var span = document.createElement('small');
-          span.className = 'text-info';
-          td.appendChild(textarea);
-          td.appendChild(span);
-          textarea.addEventListener('focusin', (e) => {
-            var initial_val = e.target.value;
-            e.target.setAttribute('data-initial',initial_val);
-          });
-          textarea.addEventListener('blur', (e) => {
-            var blur_initial = e.target.getAttribute('data-initial');
-            var blur_now = e.target.value;
-            if (blur_initial != blur_now) {
-              var atendimento_id = row[0];
-              span.className = 'text-info';
-              span.innerHTML = 'Salvando...';
-
-              // fetch para alterar valor do atendimento
-              fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
-                method: 'PUT',
-                headers: {
-                  'Content-Type':'application/json'
-                },
-                body: JSON.stringify({column: "obs", value: blur_now})
-              })
-              .then((response) => {
-                if (!response.ok) {
-                  return Promise.reject(response);
-                }
-                return response.json();
-              })
-              .then((res) => {
-                if (res.success) {
-                  span.className = 'text-success';
-                  this.emitAtualizaObs({id: atendimento_id, obs: e.target.value});
-                }
-                span.innerHTML = res.message;
-              })
-              .catch(async (err) => {
-                span.className = 'text-danger';
-                if (typeof err.json === "function") {
-                  const jsonErr = await err.json();
-                  span.innerHTML = jsonErr.message;
-                } else {
-                  console.log(err);
-                  span.innerHTML = "Erro no servidor.";
-                } 
-              })
-            }
-          })
-        } else if (idx == 3) {
-          if (cell === null) {
+      for (const prop in row) {
+        switch (prop) {
+          case "id":
+            var td = document.createElement('th');
+            td.scope = "row";
+            td.innerHTML = row[prop];
+            break;
+          case "status":
+            var td = this.statusCell(row[prop], row['id']);
+            break;
+          case "ticket":
+            var td = this.ticketCell(row[prop], row['id']);
+            break;
+          case "obs":
+            var td = this.observacaoCell(row[prop], row['id']);
+            break;
+          default:
             var td = document.createElement('td');
-            var ticketInput = document.createElement('input');
-            ticketInput.type = 'hidden';
-            ticketInput.name = 'ticket';
-            ticketInput.placeholder = "# Ticket";
-            ticketInput.className = 'form-control form-control-sm';
-            var btn = document.createElement('button');
-            btn.type = "button";
-            btn.className = "btn btn-primary btn-sm d-block";
-            btn.innerHTML = 'add Ticket';
-            btn.id = `addTicketBtn_${row[0]}`;
-            var small = document.createElement("small");
-            small.className = 'text-info';
-            btn.addEventListener('click', (e) => {
-              ticketInput.type = "text";
-              btn.classList.add('d-none');
-              ticketInput.focus();
-            });
-            ticketInput.addEventListener('blur', (e) => {
-              if (e.target.value != "") {
-                var validate = this.validateInput(e.target);
-                if (validate.valid) {
-
-                  // fetch para adicionar # do ticket
-                  var atendimento_id = row[0];
-                  
-                  fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
-                    method: 'PUT',
-                    headers: {
-                      'Content-Type':'application/json'
-                    },
-                    body: JSON.stringify({column: "ticket", value: e.target.value})
-                  })
-                  .then((response) => {
-                    if (!response.ok) {
-                      return Promise.reject(response);
-                    }
-                    return response.json();
-                  })
-                  .then((res) => {
-                    if (res.success) {
-
-                      small.innerHTML = "Salvo.";
-                      small.className = "text-success";
-                      this.bootstrapIt(btn, 'btn btn-light disabled');
-                      btn.classList.remove('btn-primary');
-                      btn.innerHTML = e.target.value;
-                      this.emitAddTicket({id: atendimento_id, ticket: e.target.value});
-
-                    }
-                    small.innerHTML = res.message;
-                  })
-                  .catch(async (err) => {
-                    small.className = 'text-danger';
-                    if (typeof err.json === "function") {
-                      const jsonErr = await err.json();
-                      small.innerHTML = jsonErr.message;
-                    } else {
-                      console.log(err);
-                      small.innerHTML = "Erro no servidor.";
-                    } 
-                  });
-
-                } else {
-                  switch (validate.message) {
-                    case "Digite apenas números no campo <# Ticket>.":
-                      small.innerHTML = "Apenas números.";
-                      break;
-                    case "O número do Ticket deve ter menos que 6 dígitos (valor máximo 99999).":
-                      small.innerHTML = "Valor máx. 99999";
-                      break;
-                    default:
-                      small.innerHTML = "Erro!";
-                      break;
-                  }
-                  small.className = "text-warning";
-                }
-              }
-              btn.classList.remove('d-none');
-              ticketInput.type = "hidden";
-            });
-            td.appendChild(ticketInput);
-            td.appendChild(btn);
-            td.appendChild(small);
-          } else {
-            var td = document.createElement('td');
-            td.innerHTML = "<a target='_blank' href='https://app.sortweb.me/tasks/adminTaskView/" + cell + "'>" + cell + "</a>";
-          }
-        } else {
-          var td = document.createElement('td');
-          td.innerHTML = cell;
+            td.innerHTML = row[prop];
         }
         tr.appendChild(td);
-      });
+      }
     });
+
   }
 
   /**
@@ -406,6 +483,12 @@ class Table {
           validation.message = "O valor do id não pode ser preenchido manualmente.";
         }
         break;
+      case "status":
+        if (input.value != 1) {
+          validation.valid = false;
+          validation.message = "O valor do status não pode ser preenchido manualmente";
+        }
+        break;
       case "client_id":
         if (input.value.trim() == '') {
           validation.valid = false;
@@ -463,7 +546,6 @@ class Table {
       }
 
       if (allValid) {
-        console.log(allValid);
         errorWrapper.innerHTML = "Campos prenchidos com sucesso. Criando registro...";
         errorWrapper.className = "text-success";
 
@@ -478,7 +560,6 @@ class Table {
         })
           .then((response) => {
             if (!response.ok) {
-              console.log('promise.reject');
               return Promise.reject(response);
             }
             return response.json();
@@ -509,8 +590,7 @@ class Table {
               errorWrapper.innerHTML = jsonErr.info + "<small class='text-warning'> Detalhes: " + jsonErr.error + "</small>";
               errorWrapper.className = "text-danger";
             } else {
-              console.log("Fetch error");
-              console.log(err);
+              console.log("Fetch error", err);
             } 
           });
 
@@ -544,6 +624,12 @@ class Table {
         var date = new Date();
         var todayDate = date.toISOString().split('T')[0]
         switch (col.toLowerCase().trim()) {
+          case "status":
+            input.disabled = "true";
+            input.name = "status";
+            input.type = "hidden";
+            input.value = "1";
+            break;
           case "num":
             input.disabled = "true";
             input.name = "id";
