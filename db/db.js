@@ -14,6 +14,13 @@ async function getAllClients() {
   return clients;
 }
 
+async function getAllStatus() {
+  const statuses = await query(
+    `SELECT id, name FROM status`,
+  );
+  return statuses;
+}
+
 async function getAllAtendimentos() {
   const atendimentos = await query (
     `SELECT atd.id as id,
@@ -42,6 +49,9 @@ async function updateAtendimento(id, column, value) {
     case "ticket":
       column_name = "ticket";
       break;
+    case "status":
+      column_name = "status_id";
+      break;
     default:
       column_name = "obs";
   }
@@ -67,5 +77,6 @@ module.exports = {
   getAllClients,
   getAllAtendimentos,
   insertAtendimento,
-  updateAtendimento
+  updateAtendimento,
+  getAllStatus
 }
