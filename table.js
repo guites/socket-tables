@@ -238,6 +238,95 @@ class Table {
   }
 
   /**
+   * Helper para uso do fetch nas alterações de status
+   */
+
+  fetchPutStatus(e, atendimento_id, small, button, dropdown_menu) {
+
+    fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type':'application/json'
+      },
+      body: JSON.stringify({column: "status", value: e.target.id})
+    })
+    .then((response) => {
+      if (!response.ok) {
+        return Promise.reject(response);
+      }
+      return response.json();
+    })
+    .then((res) => {
+      if (res.success) {
+
+        small.innerHTML = "Salvo.";
+        small.className = "d-block text-success";
+        button.innerHTML = e.target.firstChild.innerHTML;
+        dropdown_menu.innerHTML = '';
+        this.emitAtualizaStatus({id: atendimento_id, status_id: e.target.id});
+
+        // aqui, eu teria que filtrar novamente dentre os status existentes,
+        // gerar o html dos dropdown_itens e adicionar os event listeners...
+
+      }
+      small.innerHTML = res.message;
+    })
+    .catch(async (err) => {
+      small.className = 'd-block text-danger';
+      if (typeof err.json === "function") {
+        const jsonErr = await err.json();
+        small.innerHTML = jsonErr.message;
+      } else {
+        console.log(err);
+        small.innerHTML = "Erro no servidor.";
+      } 
+    });
+
+  }
+
+  /**
+   * Gera o HTML para o Modal de confirmação
+   */
+
+  generateConfirmModal(parentEl, nextSibling) {
+
+    var modal = document.createElement('div');
+    modal.className = "modal fade";
+    modal.id = "confirmModal";
+    modal.tabIndex = -1;
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-labelledby","confirmModalLabel");
+    modal.setAttribute("aria-hidden", "true");
+    modal.innerHTML = `
+
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmModalLabel">Deletar atendimento.</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="modal-body">
+            Atendimentos deletados serão removidos da listagem.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button id="confirmModalBtn" type="button" class="btn btn-primary">Deletar</button>
+          </div>
+        </div>
+      </div>
+
+    `;
+
+    var parentEl = this.checkSelector(parentEl);
+    var nextSibling = this.checkSelector(nextSibling);
+    parentEl.insertBefore(modal, nextSibling);
+
+  }
+
+
+  /**
    * Funcionalidade para o campo status na tabela
    */
 
@@ -270,11 +359,17 @@ class Table {
 
     dropdown_itens_statuses.forEach((st) => {
 
-      var dropdown_item = document.createElement("div");
+      var dropdown_item = document.createElement("button");
       dropdown_item.id = st.id;
       dropdown_item.className = "dropdown-item";
       dropdown_item.style.cursor = "pointer";
       dropdown_item.style.padding = "0.25rem 0.5rem";
+      if (st.id == 3) {
+        dropdown_item.type = "button";
+        dropdown_item.classList.add("btn");
+        dropdown_item.setAttribute("data-bs-toggle", "modal");
+        dropdown_item.setAttribute("data-bs-target", "#confirmModal");
+      }
 
       var span = document.createElement("span");
       span.innerHTML = st.name;
@@ -282,55 +377,38 @@ class Table {
 
       dropdown_item.appendChild(span);
 
-      dropdown_item.addEventListener("click", (e) => {
-
-        fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type':'application/json'
-          },
-          body: JSON.stringify({column: "status", value: e.target.id})
-        })
-        .then((response) => {
-          if (!response.ok) {
-            return Promise.reject(response);
-          }
-          return response.json();
-        })
-        .then((res) => {
-          if (res.success) {
-
-            small.innerHTML = "Salvo.";
-            small.className = "d-block text-success";
-            button.innerHTML = e.target.firstChild.innerHTML;
-            dropdown_menu.innerHTML = '';
-            this.emitAtualizaStatus({id: atendimento_id, status_id: e.target.id});
-
-            // aqui, eu teria que filtrar novamente dentre os status existentes,
-            // gerar o html dos dropdown_itens e adicionar os event listeners...
-
-          }
-          small.innerHTML = res.message;
-        })
-        .catch(async (err) => {
-          small.className = 'd-block text-danger';
-          if (typeof err.json === "function") {
-            const jsonErr = await err.json();
-            small.innerHTML = jsonErr.message;
-          } else {
-            console.log(err);
-            small.innerHTML = "Erro no servidor.";
-          } 
+      if (st.id != 3){
+        dropdown_item.addEventListener("click", (e) => {
+          this.fetchPutStatus(e, atendimento_id, small, button, dropdown_menu);
         });
+      } else {
 
-      });
+        var modalFooter = document.querySelector('#confirmModal .modal-footer');
+        var modalClose = document.querySelector('#confirmModal .btn-close');
+        var modalBody = document.querySelector('#confirmModal .modal-body');
+
+        dropdown_item.addEventListener("click", (e) => {
+          var modalBtn = document.querySelector('#confirmModalBtn');
+          var newBtn = modalBtn.cloneNode(true);
+          modalFooter.replaceChild(newBtn, modalBtn);
+          modalBody.innerHTML = `O atendimento de número #${atendimento_id} será removido da listagem.`;
+          newBtn.addEventListener('click', () => {
+            this.fetchPutStatus(e, atendimento_id, small, button, dropdown_menu);
+            modalClose.click();
+          });
+        });
+      }
+
       dropdown_menu.appendChild(dropdown_item);
     });
-
 
     td.appendChild(button);
     td.appendChild(dropdown_menu);
     td.appendChild(small);
+    return td;
+    }
+
+
 
 
 
@@ -345,9 +423,7 @@ class Table {
    //   </div>
    // `;
 
-    return td;
 
-  }
 
   /**
    * Funcionalidade para o campo ticket na tabela

@@ -184,11 +184,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('atualiza status', (newStatus) => {
-    console.log(newStatus);
-    if (parseInt(newStatus.status_id) == 1) {
-      newStatus.status_name = "aberto";
-    } else {
-      newStatus.status_name = "fechado";
+    switch (parseInt(newStatus.status_id)) {
+      case 2:
+        newStatus.status_name = "fechado";
+        break;
+      case 3:
+        newStatus.status_name = "deletado";
+        break;
+      default:
+        newStatus.status_name = "aberto";
     }
     socket.broadcast.emit('atualiza status', newStatus);
   });
