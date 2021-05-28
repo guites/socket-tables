@@ -18,6 +18,8 @@ ALTER TABLE atendimentos ADD FOREIGN KEY(status_id) REFERENCES status(id);
 - Agora que a lista mostra os clientes inativos, avisar na hora de criar OS
   o status do cliente;
 - Remover atendimento / editar atendimento inteiro ?
+- Adicionar tabela atendimentos\_status, com registro (data e hora) de quando cada atendimento foi aberto / reaberto / deletado.
+- Esquema para "travar" o texto de um status passado. Por ex, quando um atendimento for fechado, o texto dele "aberto" não pode mais ser alterado. Se a pessoa quiser adicionar informações, tem que abrir novamente.
 
 #### GLITCHES
 ![ordem de inserção por outros usuários](readme/ordem_insercoes.png)
@@ -25,4 +27,5 @@ ALTER TABLE atendimentos ADD FOREIGN KEY(status_id) REFERENCES status(id);
 ##### Já feito
 
 - Aceitar número de OS;
-- Adicionar campo que diz se o atendimento já foi concluído -> Campo "Conclusão": optei por colocar um dropdown com status do atendimento, assim posso criar mais status no futuro
+- Adicionar campo que diz se o atendimento já foi concluído -> Campo "Conclusão": optei por colocar um dropdown com status do atendimento, assim posso criar mais status no futuro;
+- Pop up para confirmar deleção de atendimento;
