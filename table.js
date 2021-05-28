@@ -391,7 +391,7 @@ class Table {
           var modalBtn = document.querySelector('#confirmModalBtn');
           var newBtn = modalBtn.cloneNode(true);
           modalFooter.replaceChild(newBtn, modalBtn);
-          modalBody.innerHTML = `O atendimento de número #${atendimento_id} será removido da listagem.`;
+          modalBody.innerHTML = `O atendimento de número <span class="text-warning">#${atendimento_id}</span> será removido da listagem.`;
           newBtn.addEventListener('click', () => {
             this.fetchPutStatus(e, atendimento_id, small, button, dropdown_menu);
             modalClose.click();
