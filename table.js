@@ -207,11 +207,20 @@ class Table {
     this.parentElement.appendChild(table);
   }
 
-  async loadRowsFromDatabase() {
+  async loadRowsFromDatabase(pg = 1, lmt = 25, order = 'desc') {
+
+    const allowed_orders = ['desc', 'asc'];
+    const page = parseInt(pg);
+    const limit = parseInt(lmt);
+
+    if ( isNaN(page) || isNaN(limit) || allowed_orders.indexOf(order) == -1 ) {
+      throw new TypeError("Valores inválidos passados na paginação!");
+      return;
+    }
 
     // pega atendimentos cadastrados no banco
 
-    var existingRows = await fetch(this.apiURL + 'api/atendimentos')
+    var existingRows = await fetch(this.apiURL + 'api/atendimentos?page=' + page + '&limit=' + limit + '&order=' + order)
     .then((res) => res.json())
     .then((r) => {
       var atendimentos = [];
@@ -791,7 +800,7 @@ class Table {
           .catch(async (err) => {
             if (typeof err.json === "function") {
               const jsonErr = await err.json();
-              errorWrapper.innerHTML = jsonErr.info + "<small class='text-warning'> Detalhes: " + jsonErr.error + "</small>";
+              errorWrapper.innerHTML = jsonErr.info ? jsonErr.info : "" + "<small class='text-warning'> Detalhes: " + jsonErr.error + "</small>";
               errorWrapper.className = "text-danger";
             } else {
               console.log("Fetch error", err);
