@@ -224,17 +224,19 @@ class Table {
     .then((res) => res.json())
     .then((r) => {
       var atendimentos = [];
-      r.forEach((atd) => {
+      r.atendimentos.forEach((atd) => {
         //atendimentos.push([atd.id,atd.status, atd.name, atd.ticket, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]);
         atendimentos.push(atd);
       });
-      return atendimentos;
+      return {atendimentos, count: r.count};
     });
 
+    var totalPages = Math.ceil(existingRows.count / limit);
+    var currentPage = page;
 
     // monta os atendimentos na tabela
 
-    this.appendExistingRows(existingRows);
+    this.appendExistingRows(existingRows.atendimentos, limit, totalPages, currentPage);
   }
 
   /**
@@ -525,8 +527,10 @@ class Table {
       td.appendChild(btn);
       td.appendChild(small);
     } else {
+
       var td = document.createElement('td');
       td.innerHTML = "<a target='_blank' href='https://app.sortweb.me/tasks/adminTaskView/" + cell + "'>" + cell + "</a>";
+
     }
 
     return td;
@@ -596,14 +600,110 @@ class Table {
   }
 
   /**
+   * Completa a ultima página com rows vazio pra não quebrar o scroll
+   */
+  fillerRows(perPage, rowslength, tbody) {
+
+    for (var y = 0; y < (perPage - rowslength); y++) {
+      var tr = tbody.insertRow(-1);
+      for (var yy = 0; yy < this.columns.length; yy++) {
+        var td = document.createElement('td');
+        switch (this.columns[yy]) {
+          case "Num":
+            var td = document.createElement('th');
+            td.scope = "row";
+            td.innerHTML = 'xx';
+            break;
+          case "Status":
+            var td = document.createElement('td');
+            td.innerHTML = '<button disabled="" type="button" class="btn btn-secondary btn-sm d-block">xxxxxx</button>';
+            break;
+          case "# Ticket":
+            var td = document.createElement('td');
+            td.innerHTML = '<button disabled="" type="button" class="btn btn-secondary btn-sm d-block">xxxxxx</button>';
+            break;
+          case "Observação":
+            var td = document.createElement('td');
+            td.innerHTML = '<textarea disabled="" class="form-control border" data-atendimentoid="22"></textarea>';
+            break;
+          case "Data - Atendimento":
+            var td = document.createElement('td');
+            td.innerHTML = 'xx/xx/xxxx';
+            break;
+          case "Data - Retorno":
+            var td = document.createElement('td');
+            td.innerHTML = 'xx/xx/xxxx';
+            break;
+          default:
+            var td = document.createElement('td');
+            td.innerHTML = 'xxxx';
+        }
+        tr.appendChild(td);
+      }
+    }
+
+  }
+
+  /**
+   * adiciona linha final com paginação
+   */
+  setPagination(tbody, totalPages, currentPage) {
+    var tr = tbody.insertRow(-1);
+    var th = document.createElement('th');
+    th.scope = "row";
+    th.innerHTML = "Paginação";
+    tr.appendChild(th);
+
+    var td = document.createElement('td');
+    td.setAttribute("colspan",7);
+    var ul = document.createElement('ul');
+    ul.className = "pagination pagination";
+    td.appendChild(ul);
+
+    for (var i = 1; i <= totalPages; i ++) { 
+
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+      a.className = "page-link";
+      a.href = "#";
+      a.innerHTML = i;
+      if (i == currentPage) {
+        li.className = "page-item active";
+      } else {
+        li.className = "page-item";
+      }
+
+      a.addEventListener("click", async (e) => {
+        await this.loadRowsFromDatabase(e.target.innerHTML, 10, 'desc');
+      });
+
+      li.appendChild(a);
+      ul.appendChild(li);
+
+    }
+
+    tr.appendChild(td);
+
+  }
+
+  /**
    * Adiciona linhas através de um array de arrays
    */
 
-  async appendExistingRows(rowsArray) {
+  async appendExistingRows(rowsArray, perPage, totalPages, currentPage) {
 
     var rows = this.checkRows(rowsArray);
-    
+
     var tbody = document.querySelector('#todo-table > tbody');
+
+    var perPage = parseInt(perPage);
+    var totalPages = parseInt(totalPages);
+    var currentPage = parseInt(currentPage);
+
+    //se vierem os parametros da paginação, limpo a planilha
+    if (!(isNaN(perPage) || isNaN(totalPages) || isNaN(currentPage))) {
+      tbody.innerHTML = "";
+    }
 
     // carrega os status regitrados no banco:
     // se eu já tiver utilizado a fetchStatus(), pego o que tiver na memória
@@ -635,6 +735,23 @@ class Table {
         tr.appendChild(td);
       }
     }, this.statuses);
+
+    if (!isNaN(perPage)) {
+
+      //completa rows na última página pra não quebrar o scroll quando clica pra mudar de página
+      this.fillerRows(perPage, rows.length, tbody);
+      
+    }
+
+    // linha final com a paginação
+    
+    if (!(isNaN(perPage) || isNaN(totalPages) || isNaN(currentPage))) {
+
+      this.setPagination(tbody, totalPages, currentPage);
+
+
+    }
+
 
   }
 
