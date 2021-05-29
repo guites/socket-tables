@@ -246,8 +246,22 @@ class Table {
     .then((r) => {
       var atendimentos = [];
       r.atendimentos.forEach((atd) => {
-        //atendimentos.push([atd.id,atd.status, atd.name, atd.ticket, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]);
-        atendimentos.push(atd);
+        atendimentos.push(
+          {
+            id: {
+              id: atd.id,
+              usuario: atd.usuario,
+            },
+            status: atd.status,
+            name: atd.name,
+            name: atd.name,
+            ticket: atd.ticket,
+            data_atendimento: atd.data_atendimento,
+            data_retorno: atd.data_retorno,
+            plataforma: atd.plataforma,
+            obs: atd.obs
+          });
+        //atendimentos.push(atd);
       });
       return {atendimentos, count: r.count};
     });
@@ -442,6 +456,15 @@ class Table {
     td.appendChild(dropdown_menu);
     td.appendChild(small);
     return td;
+  }
+
+  /**
+   * Funcionalidade para o campo Num na tabela
+   * mostrar nome do atendente no hover / clique
+   */
+
+  numCell(cell, atendimento_id) {
+
   }
 
   /**
@@ -730,16 +753,19 @@ class Table {
           case "id":
             var td = document.createElement('th');
             td.scope = "row";
-            td.innerHTML = row[prop];
+            td.innerHTML = `<span class="d-block">${row[prop].id}</span>`;
+            if (row[prop].usuario) {
+              td.innerHTML += `<small class="text-primary">${row[prop].usuario}</small>`;
+            }
             break;
           case "status":
-            var td = this.statusCell(row[prop], row['id']);
+            var td = this.statusCell(row[prop], row['id'].id);
             break;
           case "ticket":
-            var td = this.ticketCell(row[prop], row['id']);
+            var td = this.ticketCell(row[prop], row['id'].id);
             break;
           case "obs":
-            var td = this.observacaoCell(row[prop], row['id']);
+            var td = this.observacaoCell(row[prop], row['id'].id);
             break;
           default:
             var td = document.createElement('td');
@@ -911,7 +937,7 @@ class Table {
               formRow.remove();
 
               errorWrapper.className = 'text-info';
-              errorWrapper.innerHTML = `<small>Atendimento de ID ${res.atendimento.id} adicionado com sucesso.</small>`;
+              errorWrapper.innerHTML = `<small>Atendimento de ID ${res.atendimento.id.id} adicionado com sucesso.</small>`;
 
               this.emitAtendimento(res.atendimento);
 
