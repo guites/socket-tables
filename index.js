@@ -92,19 +92,27 @@ app.get('/api/status', async (req, res) => {
 });
 
 app.get('/api/atendimentos', async (req, res, next) => {
-  const { page, limit, order } = req.query;
+  let { page, limit, order } = req.query;
 
-  const allowed_orders = ['asc', 'desc'];
   if (isNaN(parseInt(page)) || isNaN(parseInt(limit))) {
     return res.status(400).send("page e limit devem ser valores numéricos.");
   }
+  if (!order) return res.status(400).send("você deve definir uma order=ASC ou order=DESC.");
+  if (page == 0) page = 1;
+  const allowed_orders = ['ASC', 'DESC'];
+  order = order.toUpperCase();
   if (allowed_orders.indexOf(order) == -1) {
-    return res.status(400).send("order deve ser asc ou desc");
+    return res.status(400).send("order deve ser ASC ou DESC");
   }
 
   try {
-    const atendimentos = await db.getAllAtendimentos();
-    res.json(atendimentos);
+    ///const atendimentos = await db.getAllAtendimentos();
+    
+    // pega a contagem de atendimentos
+    const count = await db.countAtendimentos();
+
+    const atendimentos = await db.getAtendimentos( ((page - 1) * limit), limit, order );
+    res.json({atendimentos, count: count[0].count});
   } catch(err) {
     console.log(err);
     res.status(500).send("Erro ao acessar banco de dados.");
