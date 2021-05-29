@@ -56,7 +56,22 @@ async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC') {
   // https://github.com/sidorares/node-mysql2/issues/1239#issuecomment-760314979
   
   const atendimentos = await query (
- `SELECT atd.id as id, s.name as status, c.name, atd.ticket, DATE_FORMAT(atd.data_atendimento,'%d/%m/%y') as data_atendimento, DATE_FORMAT(atd.data_retorno,'%d/%m/%y') as data_retorno, atd.plataforma, atd.obs FROM atendimentos atd INNER JOIN clientes c ON c.sort_id = atd.client_id INNER JOIN status s ON atd.status_id = s.id WHERE s.id != 3 ORDER BY atd.id ${order} LIMIT ? OFFSET ?`,
+ `SELECT atd.id as id,
+  u.username as usuario,
+  s.name as status,
+  c.name,
+  atd.ticket,
+  DATE_FORMAT(atd.data_atendimento,'%d/%m/%y') as data_atendimento,
+  DATE_FORMAT(atd.data_retorno,'%d/%m/%y') as data_retorno,
+  atd.plataforma,
+  atd.obs FROM atendimentos atd
+  INNER JOIN clientes c ON c.sort_id = atd.client_id 
+  INNER JOIN status s ON atd.status_id = s.id
+  LEFT JOIN usuarios u ON u.sort_id = atd.user_id
+  WHERE s.id != 3
+  ORDER BY atd.id ${order}
+  LIMIT ?
+  OFFSET ?`,
   [lmt.toString(), pg.toString()] );
   return atendimentos;
 }
