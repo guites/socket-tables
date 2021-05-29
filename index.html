@@ -125,7 +125,7 @@
       s.socket.on('atualiza status', (newStatus) => table.handleAtualizaStatus(newStatus));
 
       table.createTable();
-      table.loadRowsFromDatabase();
+      table.loadRowsFromDatabase(1, 10, 'desc');
       var addRowBtn = table.addNewRow('#addRowBtn');
       table.generateConfirmModal("body", "#scripts");
     </script>
