@@ -57,17 +57,24 @@ class Table {
      */
 
     var updated = document.getElementById(`dropdownMenuButton_${newStatus.id}`);
-    updated.innerHTML = newStatus.status_name;
-    var dropdown_menu = updated.nextElementSibling;
-    var small = dropdown_menu.nextElementSibling;
-    console.log(small);
-    if (small) {
-      small.innerHTML = "Atualizado.";
-      small.className = "text-warning";
+
+    if (updated) {
+      // o atendimento atualizado está na página
+      updated.innerHTML = newStatus.status_name;
+      var dropdown_menu = updated.nextElementSibling;
+      var small = dropdown_menu.nextElementSibling;
+      console.log(small);
+      if (small) {
+        small.innerHTML = "Atualizado.";
+        small.className = "text-warning";
+      }
+      if (dropdown_menu) {
+        dropdown_menu.innerHTML = '';
+      }
+    } else {
+      // o atendimento atualizado não está na página..
     }
-    if (dropdown_menu) {
-      dropdown_menu.innerHTML = '';
-    }
+
   }
 
   emitAtualizaObs(newObs) {
