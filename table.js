@@ -9,6 +9,7 @@ class Table {
     this.clients = [];
     this.statuses = [];
     this.apiURL = 'http://localhost:3000/';
+    this.currentPage = 1;
   }
 
   /**
@@ -705,7 +706,9 @@ class Table {
       }
 
       a.addEventListener("click", async (e) => {
-        await this.loadRowsFromDatabase(e.target.innerHTML, 10, 'desc');
+        const pageNum = e.target.innerHTML;
+        await this.loadRowsFromDatabase(pageNum, 10, 'desc');
+        this.currentPage = pageNum;
       });
 
       li.appendChild(a);
@@ -734,6 +737,11 @@ class Table {
     //se vierem os parametros da paginação, limpo a planilha
     if (!(isNaN(perPage) || isNaN(totalPages) || isNaN(currentPage))) {
       tbody.innerHTML = "";
+    } else {
+      // se não vierem os parametros, a função está sendo chamado no hook do socket.io
+      // só adiciono a nova linha se eu estiver na primeira página
+      if (this.currentPage != 1) return;
+      // aqui eu vou chamar a função que marca o registro na tela dos usuários, tipo um activity log
     }
 
     // carrega os status regitrados no banco:
