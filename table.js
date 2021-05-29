@@ -64,7 +64,6 @@ class Table {
       updated.innerHTML = newStatus.status_name;
       var dropdown_menu = updated.nextElementSibling;
       var small = dropdown_menu.nextElementSibling;
-      console.log(small);
       if (small) {
         small.innerHTML = "Atualizado.";
         small.className = "text-warning";
@@ -95,11 +94,15 @@ class Table {
      */
 
     var updated = document.querySelector(`[data-atendimentoid="${newObs.id}"]`);
-    updated.value = newObs.obs;
-    var small = updated.nextElementSibling;
-    if (small) {
-      small.innerHTML = "Atualizado.";
-      small.className = "text-warning";
+    if (updated) {
+      updated.value = newObs.obs;
+      var small = updated.nextElementSibling;
+      if (small) {
+        small.innerHTML = "Atualizado.";
+        small.className = "text-warning";
+      }
+    } else {
+      // o atendimento atualizado não está na página..
     }
   }
 
