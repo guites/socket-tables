@@ -65,7 +65,7 @@ async function updateAtendimento(id, column, value) {
 
 
 async function insertAtendimento(atd) {
-  if (atd.ticket == '') {
+  if (atd.ticket == '' || !atd.ticket) {
     atd.ticket = null;
   }
   const newAtd = await query (
