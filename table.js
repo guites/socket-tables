@@ -169,7 +169,11 @@ class Table {
     table.appendChild(caption);
 
     var header = document.createElement('thead');
-    var tr = header.insertRow(-1);
+
+    
+    // adc nome das colunas -- início
+    
+    var tr = header.insertRow(0);
 
     this.columns.forEach((col) => {
       var th = document.createElement('th');
@@ -178,13 +182,10 @@ class Table {
       tr.appendChild(th);
     });
 
-    table.appendChild(header);
-
-    var tbody = document.createElement('tbody');
-    table.appendChild(tbody);
-
-    var tfoot = document.createElement('tfoot');
-    var tr = tfoot.insertRow(-1);
+    // adc nome das colunas -- fim
+    // adc botao para inserir linha -- início
+    
+    var tr = header.insertRow(1);
 
     var td = document.createElement('td');
     td.setAttribute("colspan", 5);
@@ -193,19 +194,32 @@ class Table {
     tdErrorWrapper.setAttribute("colspan", 4);
     tdErrorWrapper.innerHTML = `<span role='alert' id='error-span' aria-hidden="true" class="text-warning"></span>`;
 
-    var footBtn = document.createElement('button');
-    footBtn.id = "addRowBtn";
-    footBtn.type = "button";
-    footBtn.innerText = "Novo atendimento";
-    this.bootstrapIt(footBtn, "btn btn-primary");
+    var headBtn = document.createElement('button');
+    headBtn.id = "addRowBtn";
+    headBtn.type = "button";
+    headBtn.innerText = "Novo atendimento";
+    this.bootstrapIt(headBtn, "btn btn-primary");
 
-    td.appendChild(footBtn);
+    td.appendChild(headBtn);
     tr.appendChild(td);
     tr.appendChild(tdErrorWrapper);
+
+    // adc botao para inserir linha -- fim
+
+    table.appendChild(header);
+
+    var tbody = document.createElement('tbody');
+    table.appendChild(tbody);
+
+    var tfoot = document.createElement('tfoot');
     table.appendChild(tfoot);
 
     this.parentElement.appendChild(table);
   }
+
+  /**
+   * Puxa atendimentos do banco de dados baseado nos parametros de paginação
+   */
 
   async loadRowsFromDatabase(pg = 1, lmt = 25, order = 'desc') {
 
@@ -245,6 +259,10 @@ class Table {
    */
 
   regenerateStatus() {
+    /**
+     * Fora de uso, após alterar status o usuário precisa
+     * atualizar a pagina se quiser alterar novamente
+     */
 
   }
 
@@ -417,24 +435,7 @@ class Table {
     td.appendChild(dropdown_menu);
     td.appendChild(small);
     return td;
-    }
-
-
-
-
-
-   // td.innerHTML = `
-   //   <div class="dropdown" >
-   //     <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-   //       ${cell}
-   //     </button>
-   //     <div style="min-width:0; max-width:5rem;" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-   //     ${dropdown_itens}
-   //     </div>
-   //   </div>
-   // `;
-
-
+  }
 
   /**
    * Funcionalidade para o campo ticket na tabela
@@ -711,7 +712,12 @@ class Table {
     if (this.statuses.length == 0) this.statuses = await this.fetchStatus();
 
     rows.forEach((row) => {
-      var tr = tbody.insertRow(-1);
+
+      if (!(isNaN(perPage) || isNaN(totalPages) || isNaN(currentPage))) {
+        var tr = tbody.insertRow(-1);
+      } else {
+        var tr = tbody.insertRow(0);
+      }
       for (const prop in row) {
         switch (prop) {
           case "id":
@@ -736,22 +742,17 @@ class Table {
       }
     }, this.statuses);
 
-    if (!isNaN(perPage)) {
+    if (!(isNaN(perPage) || isNaN(totalPages) || isNaN(currentPage))) {
 
       //completa rows na última página pra não quebrar o scroll quando clica pra mudar de página
       this.fillerRows(perPage, rows.length, tbody);
-      
-    }
 
-    // linha final com a paginação
-    
-    if (!(isNaN(perPage) || isNaN(totalPages) || isNaN(currentPage))) {
-
-      this.setPagination(tbody, totalPages, currentPage);
-
+      // linha final com a paginação
+      var tfoot = tbody.nextElementSibling;
+      tfoot.innerHTML = '';
+      this.setPagination(tfoot, totalPages, currentPage);
 
     }
-
 
   }
 
@@ -940,8 +941,8 @@ class Table {
     var button = this.checkSelector(btnDOM);
 
     button.addEventListener('click', async (e) => {
-      var tbody = document.querySelector('#todo-table > tbody');
-      var tr = tbody.insertRow(-1);
+      var tbody = document.querySelector('#todo-table > thead');
+      var tr = tbody.insertRow(1);
       // adiciona classe na nova linha para identificá-la nos outro métodos
       var oldAtendimento = document.querySelector('.new-atendimento');
       if (oldAtendimento) oldAtendimento.classList.remove('new-atendimento');
@@ -1010,6 +1011,7 @@ class Table {
             input.required = "true";
         }
         var td = document.createElement('td');
+        td.style.verticalAlign = "top";
         td.appendChild(input);
         if (col.toLowerCase().trim() == 'cliente') {
           var dropdown = document.createElement('div');

@@ -230,7 +230,6 @@ app.post('/api/atendimentos', async (req, res) => {
   }
   try {
     const newAtd = await db.insertAtendimento(req.body);
-    console.log("newAtd:");
     return res.json({
       success: true,
       atendimento: {
