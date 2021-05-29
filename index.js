@@ -10,12 +10,13 @@ const bodyParser = require('body-parser');
 
 function clientErrorHandler (err, req, res, next) {
   console.log(req.xhr);
-  console.log(err);
   if (req.xhr) {
     res.status(500).send({ error: 'Something failed!' })
   } else {
-    if (res.type = 'entity.too.large') {
-      res.status(413).json({success:false, message:'Campo muito grande!'})
+    if (err.type == 'entity.too.large') {
+      res.status(413).json({success:false, message:'Campo muito grande!'});
+    } else if (err.type == 'entity.parse.failed') {
+      res.status(400).json({success:false, message:'json mal formatado.'});
     } else {
       next(err);
     }
@@ -34,6 +35,40 @@ app.use(clientErrorHandler);
 app.get('/', (req, res) => {
   app.use(express.static(__dirname));
   res.sendFile(__dirname + '/index.html');
+});
+
+app.get('/api', async (req, res) => {
+  res.json({
+    routes: {
+      "/api/clients": {
+        "get": {},
+      },
+      "/api/status": {
+        "get": {}
+      },
+      "/api/atendimentos": {
+        "get": {
+          page: "offset from latest atendimento, based on limit",
+          limit: "atendimentos per page",
+          order: "asc or desc"
+        },
+        "post": {
+          client_id: 'int',
+          ticket: 'int',
+          data_atendimento: 'datetime',
+          data_retorno: 'datetime',
+          plataforma: 'varchar(255)',
+          obs: 'text'
+        }
+      },
+      "/api/atendimentos/:id": {
+        "put": {
+          column: "column to be updated",
+          value: "new column value"
+        }
+      },
+    }
+  });
 });
 
 app.get('/api/clients', async (req, res) => {
@@ -57,6 +92,16 @@ app.get('/api/status', async (req, res) => {
 });
 
 app.get('/api/atendimentos', async (req, res, next) => {
+  const { page, limit, order } = req.query;
+
+  const allowed_orders = ['asc', 'desc'];
+  if (isNaN(parseInt(page)) || isNaN(parseInt(limit))) {
+    return res.status(400).send("page e limit devem ser valores numéricos.");
+  }
+  if (allowed_orders.indexOf(order) == -1) {
+    return res.status(400).send("order deve ser asc ou desc");
+  }
+
   try {
     const atendimentos = await db.getAllAtendimentos();
     res.json(atendimentos);
@@ -64,6 +109,7 @@ app.get('/api/atendimentos', async (req, res, next) => {
     console.log(err);
     res.status(500).send("Erro ao acessar banco de dados.");
   }
+
 });
 
 app.put('/api/atendimentos/:id', async(req, res) => {
@@ -106,38 +152,82 @@ app.put('/api/atendimentos/:id', async(req, res) => {
  */
 
 function getStatusName(status_id) {
-  let status_name;
-  switch (parseInt(status_id, 10)) {
+  return status_name;
+}
+
+function validateNewAtendimento(atd) {
+
+  console.log(atd);
+
+  const body = {
+    client_id: atd.client_id,
+    status: atd.status,
+    ticket: atd.ticket,
+    data_atendimento: atd.data_atendimento,
+    data_retorno: atd.data_retorno,
+    plataforma: atd.plataforma,
+    obs: atd.obs
+  };
+
+  //valida campos obrigatórios
+  
+  if (
+    !body.client_id ||
+    !body.data_atendimento ||
+    !body.data_retorno ||
+    !body.plataforma ||
+    !body.obs ||
+    !body.status
+  ) throw new Error("campos client_id, status, data_atendimento, data_retorno, plataforma e obs são obrigatórios.");
+
+  // valida status_id
+  
+  switch (parseInt(body.status, 10)) {
     case 1:
-      status_name = "aberto";
+      body.status_name = "aberto";
       break
     case 2:
-      status_name = "fechado";
+      throw new RangeError("O status inicial do atendimento deve ser aberto.");
       break;
     default:
       throw new RangeError("Valor de status inválido");
   }
-  return status_name;
+
+  // validate campos de data
+  // caso os valores vierem como string, o mysql impede a inserção
+  // preciso validar se a data está no intervalo esperado
+  var data_atendimento = new Date(body.data_atendimento);
+  var data_fechamento = new Date(body.data_fechamento);
+  var hoje = new Date();
+  var limite_inferior = hoje.setDate(hoje.getDate() - 7);
+
+  if (
+    data_atendimento < limite_inferior ||
+    data_fechamento < limite_inferior
+  ) {
+    throw new Error("Você não pode criar atendimentos referentes a mais de uma semana no passado.");
+  }
+
+  return body;
 }
 
-
 app.post('/api/atendimentos', async (req, res) => {
+  let body;
   try {
-    atd_status = getStatusName(req.body.status);
-  } catch(err) {
-    console.log(err);
+    body = validateNewAtendimento(req.body);
+  } catch (err) {
     return res.status(400).json({
       "error": err.message,
-      "info": "Campo status fora do intervalo permitido"
     });
   }
   try {
     const newAtd = await db.insertAtendimento(req.body);
+    console.log("newAtd:");
     return res.json({
       success: true,
       atendimento: {
         id: newAtd.insertId,
-        status: atd_status,
+        status: body.status_name,
         cliente: req.body.name,
         ticket: req.body.ticket,
         data_atendimento: req.body.data_atendimento,
@@ -147,6 +237,7 @@ app.post('/api/atendimentos', async (req, res) => {
       }
     });
   } catch(err) {
+    console.log(err);
     if (err.sqlMessage) {
       const payLoadKeys = Object.keys(req.body);
       for (var i = 0; i < payLoadKeys.length; i ++) {
@@ -159,7 +250,6 @@ app.post('/api/atendimentos', async (req, res) => {
         }
       }
     }
-    console.log(err.type);
   }
 });
 
