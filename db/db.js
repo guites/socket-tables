@@ -21,6 +21,16 @@ async function getAllStatus() {
   return statuses;
 }
 
+async function countAtendimentos() {
+
+  const count = await query (
+    `SELECT COUNT(*) as count FROM atendimentos WHERE status_id != 3`
+  );
+
+  return count;
+
+}
+
 async function getAllAtendimentos() {
   const atendimentos = await query (
     `SELECT atd.id as id,
@@ -35,11 +45,21 @@ async function getAllAtendimentos() {
     INNER JOIN clientes c ON c.sort_id = atd.client_id
     INNER JOIN status s ON atd.status_id = s.id
     WHERE s.id != 3
-    ORDER BY atd.id ASC`
+    ORDER BY atd.id DESC`
   );
   return atendimentos;
 }
 
+async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC') {
+
+  // sobre o .toString() ali, depois de eu ter verificado se era um número válido,
+  // https://github.com/sidorares/node-mysql2/issues/1239#issuecomment-760314979
+  
+  const atendimentos = await query (
+ `SELECT atd.id as id, s.name as status, c.name, atd.ticket, DATE_FORMAT(atd.data_atendimento,'%d/%m/%y') as data_atendimento, DATE_FORMAT(atd.data_retorno,'%d/%m/%y') as data_retorno, atd.plataforma, atd.obs FROM atendimentos atd INNER JOIN clientes c ON c.sort_id = atd.client_id INNER JOIN status s ON atd.status_id = s.id WHERE s.id != 3 ORDER BY atd.id ${order} LIMIT ? OFFSET ?`,
+  [lmt.toString(), pg.toString()] );
+  return atendimentos;
+}
 async function updateAtendimento(id, column, value) {
   // acho que não consigo setar o nome da coluna de forma dinâmica
   let column_name;
@@ -77,6 +97,8 @@ async function insertAtendimento(atd) {
 module.exports = {
   getAllClients,
   getAllAtendimentos,
+  getAtendimentos,
+  countAtendimentos,
   insertAtendimento,
   updateAtendimento,
   getAllStatus
