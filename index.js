@@ -266,7 +266,10 @@ app.post('/api/atendimentos', async (req, res) => {
           usuario: body.username,
         },
         status: body.status_name,
-        cliente: req.body.name,
+        cliente: {
+          name: req.body.name,
+          client_id: body.client_id,
+        },
         ticket: req.body.ticket,
         data_atendimento: req.body.data_atendimento,
         data_retorno: req.body.data_retorno,
