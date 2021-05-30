@@ -150,8 +150,9 @@
       s.socket.on('atualiza status', (newStatus) => table.handleAtualizaStatus(newStatus));
 
       table.createTable();
-      table.loadRowsFromDatabase(1, 10, 'desc');
+      table.loadRowsFromDatabase(1, table.perPage, 'desc');
       var addRowBtn = table.addNewRow('#addRowBtn');
+      var searchInput = table.enableClientFilter('#searchInput', '#searchBtn');
       table.generateConfirmModal("body", "#scripts");
       table.defineUser("#openConfiguracoesBtn");
     </script>
