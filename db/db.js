@@ -14,6 +14,21 @@ async function getAllClients() {
   return clients;
 }
 
+async function getAllUsers() {
+  const users = await query(
+    `SELECT sort_id as id, username as usuario FROM usuarios WHERE active = 1`,
+  );
+  return users;
+}
+
+async function getUserById(id) {
+  const user = await query(
+    `SELECT username FROM usuarios WHERE sort_id = ? AND active = 1`,
+    [id]
+  );
+  return user;
+}
+
 async function getAllStatus() {
   const statuses = await query(
     `SELECT id, name FROM status`,
@@ -104,13 +119,15 @@ async function insertAtendimento(atd) {
     atd.ticket = null;
   }
   const newAtd = await query (
-    `INSERT INTO atendimentos (client_id, ticket, data_atendimento, data_retorno, plataforma, obs) VALUES (?, ?, ?, ?, ?, ?)`,
-    [atd.client_id, atd.ticket, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]
+    `INSERT INTO atendimentos (client_id, user_id, ticket, data_atendimento, data_retorno, plataforma, obs) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [atd.client_id, atd.user_id, atd.ticket, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]
   );
   return newAtd;
 }
 module.exports = {
   getAllClients,
+  getAllUsers,
+  getUserById,
   getAllAtendimentos,
   getAtendimentos,
   countAtendimentos,
