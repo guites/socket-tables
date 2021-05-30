@@ -81,6 +81,16 @@ app.get('/api/clients', async (req, res) => {
   }
 });
 
+app.get('/api/users', async (req, res) => {
+  try {
+    const users = await db.getAllUsers();
+    res.json(users);
+  } catch(err) {
+    console.log(err);
+    res.status(500).send("Erro ao acessar banco de dados.");
+  }
+});
+
 app.get('/api/status', async (req, res) => {
   try {
     const statuses = await db.getAllStatus();
@@ -154,21 +164,11 @@ app.put('/api/atendimentos/:id', async(req, res) => {
   }
 });
 
-/**
- * Helper para definir o nome do status, quickfix pra evitar
- * consulta extra no banco
- */
-
-function getStatusName(status_id) {
-  return status_name;
-}
-
-function validateNewAtendimento(atd) {
-
-  console.log(atd);
+async function validateNewAtendimento(atd) {
 
   const body = {
     client_id: atd.client_id,
+    user_id: atd.user_id,
     status: atd.status,
     ticket: atd.ticket,
     data_atendimento: atd.data_atendimento,
@@ -181,27 +181,23 @@ function validateNewAtendimento(atd) {
   
   if (
     !body.client_id ||
+    !body.user_id ||
     !body.data_atendimento ||
     !body.data_retorno ||
     !body.plataforma ||
     !body.obs ||
     !body.status
-  ) throw new Error("campos client_id, status, data_atendimento, data_retorno, plataforma e obs são obrigatórios.");
+  ) throw new Error("campos client_id, user_id, status, data_atendimento, data_retorno, plataforma e obs são obrigatórios.");
 
   // valida status_id
-  
-  switch (parseInt(body.status, 10)) {
-    case 1:
-      body.status_name = "aberto";
-      break
-    case 2:
-      throw new RangeError("O status inicial do atendimento deve ser aberto.");
-      break;
-    default:
-      throw new RangeError("Valor de status inválido");
+  const received_status = parseInt(body.status, 10);
+  if (received_status === 1) {
+    body.status_name = "aberto";
+  } else {
+    throw new RangeError("O status inicial do atendimento deve ser aberto.");
   }
 
-  // validate campos de data
+  // valida campos de data
   // caso os valores vierem como string, o mysql impede a inserção
   // preciso validar se a data está no intervalo esperado
   var data_atendimento = new Date(body.data_atendimento);
@@ -216,13 +212,21 @@ function validateNewAtendimento(atd) {
     throw new Error("Você não pode criar atendimentos referentes a mais de uma semana no passado.");
   }
 
+  // valida o campo user_id
+  const user = await db.getUserById(body.user_id);
+
+  if (!user) {
+    throw new Error("Id de usuário inválido!");
+  }
+  body.username = user[0].username;
+
   return body;
 }
 
 app.post('/api/atendimentos', async (req, res) => {
   let body;
   try {
-    body = validateNewAtendimento(req.body);
+    body = await validateNewAtendimento(req.body);
   } catch (err) {
     return res.status(400).json({
       "error": err.message,
@@ -233,7 +237,10 @@ app.post('/api/atendimentos', async (req, res) => {
     return res.json({
       success: true,
       atendimento: {
-        id: newAtd.insertId,
+        id:{
+          id: newAtd.insertId,
+          usuario: body.username,
+        },
         status: body.status_name,
         cliente: req.body.name,
         ticket: req.body.ticket,
