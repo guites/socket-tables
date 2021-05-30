@@ -28,7 +28,6 @@ Resolvido, colocando o form de inserção no cabeçalho.
 
 Implementar
 
-- Adicionar campo com o nome do atendente (deixar pré-populado via cookie/sessão);
 - utilizar esquema de popup.
 - Filtro por nome de cliente;
 - Agora que a lista mostra os clientes inativos, avisar na hora de criar OS
@@ -37,13 +36,15 @@ Implementar
 - Adicionar tabela atendimentos\_status, com registro (data e hora) de quando cada atendimento foi aberto / reaberto / deletado.
 - Esquema para "travar" o texto de um status passado. Por ex, quando um atendimento for fechado, o texto dele "aberto" não pode mais ser alterado. Se a pessoa quiser adicionar informações, tem que abrir novamente.
 - Permitir escrever nas observações apenas para atendimentos em aberto.
+- Campo "Conclusão": adicionar um comentário na hora de fechar o atendimento.
 
 Já feito
 
 - Aceitar número de OS;
-- Adicionar campo que diz se o atendimento já foi concluído -> Campo "Conclusão": optei por colocar um dropdown com status do atendimento, assim posso criar mais status no futuro;
+- Adicionar campo que diz se o atendimento já foi concluído: optei por colocar um dropdown com status do atendimento, assim posso criar mais status no futuro;
 - Pop up para confirmar deleção de atendimento;
 - Paginação, mais novos por último, botão de novo atendimento em cima.
+- Adicionar campo com o nome do atendente (deixar pré-populado via cookie/sessão): optei por um cookie js até que seja definido a forma como vai ser autenticado nos envios pro sortweb. Depois, posso pensar em um sistema de login pra gerar uma chave no sort, algo do tipo.
 
 #### DB MIGRATIONS
 
