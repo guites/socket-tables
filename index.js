@@ -43,6 +43,9 @@ app.get('/api', async (req, res) => {
       "/api/clients": {
         "get": {},
       },
+      "/api/clients/atendimentos": {
+        "get": {},
+      },
       "/api/status": {
         "get": {}
       },
@@ -81,6 +84,16 @@ app.get('/api/clients', async (req, res) => {
   }
 });
 
+app.get('/api/clients/atendimentos', async (req, res) => {
+  try {
+    const clients = await db.getClientsAtendimentos();
+    res.json(clients);
+  } catch(err) {
+    console.log(err);
+    res.status(500).send("Erro ao acessar banco de dados.");
+  }
+});
+
 app.get('/api/users', async (req, res) => {
   try {
     const users = await db.getAllUsers();
@@ -102,7 +115,7 @@ app.get('/api/status', async (req, res) => {
 });
 
 app.get('/api/atendimentos', async (req, res, next) => {
-  let { page, limit, order } = req.query;
+  let { page, limit, order, client_id } = req.query;
 
   if (isNaN(parseInt(page)) || isNaN(parseInt(limit))) {
     return res.status(400).send("page e limit devem ser valores numéricos.");
@@ -116,12 +129,23 @@ app.get('/api/atendimentos', async (req, res, next) => {
   }
 
   try {
-    ///const atendimentos = await db.getAllAtendimentos();
-    
-    // pega a contagem de atendimentos
-    const count = await db.countAtendimentos();
 
-    const atendimentos = await db.getAtendimentos( ((page - 1) * limit), limit, order );
+    let atendimentos;
+    let count;
+
+    client_id = parseInt(client_id);
+
+    if (!isNaN(client_id)) {
+
+      count = await db.countAtendimentos(client_id);
+      atendimentos = await db.getAtendimentosByClient( ((page - 1) * limit), limit, order, client_id );
+
+    } else {
+
+      count = await db.countAtendimentos(client_id);
+      atendimentos = await db.getAtendimentos( ((page - 1) * limit), limit, order );
+
+    }
     res.json({atendimentos, count: count[0].count});
   } catch(err) {
     console.log(err);
