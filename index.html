@@ -57,15 +57,40 @@
                   rel="noopener" target="_blank">Certificados - Projetos</a>
               </div>
             </li>
-          </ul>
-          <ul class="navbar-nav ms-md-auto">
             <li class="nav-item">
               <a target="_blank" rel="noopener" class="nav-link" href="https://repositorio.astrusweb.com/">Repositório</a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ms-md-auto">
+            <li class="nav-item d-flex align-items-center">
+              <button id="openConfiguracoesBtn" class="btn btn-warning btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#configuracoesDiv" aria-expanded="false" aria-controls="collapseExample">
+                Configurações
+              </button>
             </li>
           </ul>
         </div>
       </div>
     </div>
+
+    <div class="container">
+      <div class="collapse " id="configuracoesDiv">
+        <!-- col-md-3 offset-md-9 -->
+        <div class="card border-warning rounded-0 mb-3" >
+          <div class="card-header">Configurações</div>
+          <div class="card-body">
+            <h4 class="card-title">Defina seu usuário</h4>
+            <p class="card-text">O nome de usuário colocado aqui será utilizado no registro de suas atividades.</p>
+              <div class="form-group">
+                <label for="defineUsuario" class="form-label mt-4">Selecione seu nome na lista.</label>
+                <select class="form-select" id="defineUsuario" style="max-width:20rem;">
+                </select>
+                <small></small>
+              </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class='container'>
       <div class="page-header">
         <div class="row">
@@ -128,6 +153,7 @@
       table.loadRowsFromDatabase(1, 10, 'desc');
       var addRowBtn = table.addNewRow('#addRowBtn');
       table.generateConfirmModal("body", "#scripts");
+      table.defineUser("#openConfiguracoesBtn");
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
 
