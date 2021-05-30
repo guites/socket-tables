@@ -11,6 +11,7 @@ class Table {
     this.statuses = [];
     this.apiURL = 'http://localhost:3000/';
     this.currentPage = 1;
+    this.usuario = {};
   }
 
   /**
@@ -335,9 +336,7 @@ class Table {
         small.className = "d-block text-success";
         button.innerHTML = e.target.firstChild.innerHTML;
         dropdown_menu.innerHTML = '';
-        this.emitAtualizaStatus({id: atendimento_id, status_id: e.target.id});
-
-        // aqui, eu teria que filtrar novamente dentre os status existentes,
+        this.emitAtualizaStatus({id: atendimento_id, status_id: e.target.id}); // aqui, eu teria que filtrar novamente dentre os status existentes,
         // gerar o html dos dropdown_itens e adicionar os event listeners...
 
       }
@@ -1008,6 +1007,64 @@ class Table {
   }
 
   /**
+   * Lida com a alteração no nome do usuário (área configurações)
+   */
+
+  defineUser(button) {
+    var button = this.checkSelector(button);
+
+    button.addEventListener("click", async () => {
+
+      if (this.usuarios.length == 0) this.usuarios = await this.fetchUsuarios();
+      var select = this.checkSelector("#defineUsuario");
+      if (select.childElementCount == 0) {
+        this.setUsuarioFromCookie();
+        var small = this.checkSelector(select.nextElementSibling);
+        this.usuarios.forEach((usuario) => {
+          var option = document.createElement("option");
+          if (this.usuario.id == usuario[0]) {
+            option.selected = "selected";
+          }
+          option.innerHTML = usuario[1];
+          option.setAttribute('data-usuarioid', usuario[0]);
+          select.appendChild(option);
+        });
+        select.addEventListener("change", (e) => {
+          // vou usar um client side cookie pq por enquanto o servidor é reiniciado diariamente.
+          const expires = new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000).toGMTString();
+          const planilhaUserId = select.options[ select.selectedIndex ].getAttribute("data-usuarioid");
+          const planilhaUserName = select.value;
+          document.cookie = `cookie_planilha_usuario=${planilhaUserName}_${planilhaUserId};expires=${expires};path=/;Secure`;
+          if (this.setUsuarioFromCookie()) {
+            small.innerHTML = "Usuário salvo com sucesso.";
+            small.className = "text-success";
+          } else {
+            small.innerHTML = "Ocorreu um erro ao salvar seu usuário. Verifique a aba Armazenamento no FireFox ou <a href='https://support.google.com/chrome/answer/95647?co=GENIE.Platform%3DDesktop&hl=pt-BR' rel='noopener'>limpe seus cookies no google chrome, e tente novamente.</a>";
+            small.className = "text-danger";
+          }
+        });
+      }
+    });
+  }
+
+  /**
+   * Puxa o username e id do cookie
+   */
+
+  setUsuarioFromCookie() {
+    const c = document.cookie.match(`(^|;)\\s*cookie_planilha_usuario\\s*=\\s*([^;]+)`);
+    if (c) {
+      const cookie = c.pop();
+      const userData = cookie.split("_");
+      this.usuario.id = userData[1];
+      this.usuario.username = userData[0];
+      return true;
+    }
+    // no cookie t_t
+    return false
+  }
+
+  /**
    * Habilita o botão para adicionar novas linhas
    * Retorna o HTMLElement do botão
    */
@@ -1032,9 +1089,7 @@ class Table {
         var todayDate = date.toISOString().split('T')[0]
         switch (col.toLowerCase().trim()) {
           case "status":
-            input.disabled = "true";
-            input.name = "status";
-            input.type = "hidden";
+            input.disabled = "true"; input.name = "status"; input.type = "hidden";
             input.value = "1";
             break;
           case "num":
@@ -1043,7 +1098,7 @@ class Table {
             input.name = "user_id";
             input.type = 'text';
             input.placeholder = 'Atendente';
-            input.value = "guilhermea";
+            input.value = "";
             input.id = "usuarios_dropdown";
             input.required = "true";
             input.classList.add("dropdown-toggle");
@@ -1143,6 +1198,17 @@ class Table {
       if (this.usuarios.length == 0) this.usuarios = await this.fetchUsuarios();
       this.autoComplete(usuarios_input, this.usuarios, 'usuario');
 
+      // se o this.usuario.id não estiver carregado, tento puxar do cookie.
+      // se mesmo assim não estiver, desisto
+      if (this.usuario.id) {
+        usuarios_input.setAttribute('data-usuarioid', this.usuario.id);
+        usuarios_input.value = this.usuario.username;
+      } else {
+        if (this.setUsuarioFromCookie()) {
+          usuarios_input.setAttribute('data-usuarioid', this.usuario.id);
+          usuarios_input.value = this.usuario.username;
+        }
+      }
        
       // põe o foco no input "cliente", mas antes clica no input "atendente"
       // essa gambiarra vai me causar problemas mais pra frente.
