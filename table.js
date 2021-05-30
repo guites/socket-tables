@@ -6,7 +6,17 @@ class Table {
       ['Num', 'Status', 'Cliente', '# Ticket', 'Data - Atendimento', 'Data - Retorno', 'Plataforma', 'Observação']
     );
     this.parentElement = this.checkSelector('#table-wrapper');
+    // listagem de todos os clientes
     this.clients = [];
+    // listagem dos clientes que possuem atendimento, para o filtro
+    this.clientesAtendimentos = [];
+
+    // guarda o id do cliente caso o filtro estiver ativo
+    this.currentClientId = null;
+
+    // número de linhas por página da planilha
+    this.perPage = 25;
+
     this.usuarios = [];
     this.statuses = [];
     this.apiURL = 'http://localhost:3000/';
@@ -168,6 +178,23 @@ class Table {
   }
 
   /**
+   * Carrega os clientes com atendimento no banco
+   */
+
+  async fetchClientsAtendimentos() {
+    this.clientesAtendimentos = [];
+    var clients_list = await fetch(this.apiURL + 'api/clients/atendimentos')
+    .then((res) => res.json())
+    .then((r) => {
+      var clients_list = [];
+      r.forEach((client) => {
+        clients_list.push([client.sort_id, client.name.toUpperCase(), client.count]);
+      });
+      return clients_list;
+    });
+    return clients_list;
+  }
+  /**
    * Carrega os usuarios cadastrados no banco
    */
 
@@ -218,11 +245,8 @@ class Table {
     var tr = header.insertRow(1);
 
     var td = document.createElement('td');
-    td.setAttribute("colspan", 5);
+    td.setAttribute("colspan", 2);
 
-    var tdErrorWrapper = document.createElement('td');
-    tdErrorWrapper.setAttribute("colspan", 4);
-    tdErrorWrapper.innerHTML = `<span role='alert' id='error-span' aria-hidden="true" class="text-warning"></span>`;
 
     var headBtn = document.createElement('button');
     headBtn.id = "addRowBtn";
@@ -232,9 +256,53 @@ class Table {
 
     td.appendChild(headBtn);
     tr.appendChild(td);
-    tr.appendChild(tdErrorWrapper);
 
     // adc botao para inserir linha -- fim
+    // adc campo de busca -- inicio
+   
+    var td = document.createElement('td');
+    td.setAttribute("colspan", 3);
+
+    var searchInput = document.createElement('input');
+    searchInput.type = "search";
+    searchInput.id = "searchInput";
+    searchInput.placeholder = "Filtrar por cliente";
+    searchInput.classList.add("dropdown-toggle");
+    searchInput.setAttribute("data-bs-toggle","dropdown");
+    searchInput.setAttribute("aria-expanded", false);
+    this.bootstrapIt(searchInput, "form-control me-sm-2");
+
+    var dropdown = document.createElement('div');
+    dropdown.className = 'dropdown-menu';
+    dropdown.role = "menu";
+
+    td.appendChild(searchInput);
+    td.appendChild(dropdown);
+    tr.appendChild(td);
+
+    var td = document.createElement('td');
+    td.setAttribute("colspan", 1);
+
+    var searchBtn = document.createElement('button');
+    searchBtn.type = "button";
+    searchBtn.innerHTML = "Filtrar";
+    searchBtn.id = "searchBtn";
+    this.bootstrapIt(searchBtn, "btn btn-primary");
+
+    td.appendChild(searchBtn);
+    tr.appendChild(td);
+
+   // adc campo de busca -- fim
+    //
+   // adc espaço para mostrar avisos: inserção e busca -- início
+    
+    var tdErrorWrapper = document.createElement('td');
+    tdErrorWrapper.setAttribute("colspan", 4);
+    tdErrorWrapper.innerHTML = `<span role='alert' id='error-span' aria-hidden="true" class="text-warning"></span>`;
+    tr.appendChild(tdErrorWrapper);
+
+    // adc espaço para mostrar avisos: inserção e busca -- fim
+
 
     table.appendChild(header);
 
@@ -249,9 +317,10 @@ class Table {
 
   /**
    * Puxa atendimentos do banco de dados baseado nos parametros de paginação
+   * extendi pra aceitar o id de cliente, uso na paginação
    */
 
-  async loadRowsFromDatabase(pg = 1, lmt = 25, order = 'desc') {
+  async loadRowsFromDatabase(pg = 1, lmt = this.perPage, order = 'desc', client_id = null) {
 
     const allowed_orders = ['desc', 'asc'];
     const page = parseInt(pg);
@@ -264,7 +333,7 @@ class Table {
 
     // pega atendimentos cadastrados no banco
 
-    var existingRows = await fetch(this.apiURL + 'api/atendimentos?page=' + page + '&limit=' + limit + '&order=' + order)
+    var existingRows = await fetch(this.apiURL + 'api/atendimentos?page=' + page + '&limit=' + limit + '&order=' + order + "&client_id=" + client_id)
     .then((res) => res.json())
     .then((r) => {
       var atendimentos = [];
@@ -294,7 +363,7 @@ class Table {
 
     // monta os atendimentos na tabela
 
-    this.appendExistingRows(existingRows.atendimentos, limit, totalPages, currentPage);
+    this.appendExistingRows(existingRows.atendimentos, this.perPage, totalPages, currentPage, client_id);
   }
 
   /**
@@ -699,7 +768,7 @@ class Table {
   /**
    * adiciona linha final com paginação
    */
-  setPagination(tbody, totalPages, currentPage) {
+  setPagination(tbody, totalPages, currentPage, client_id) {
     var tr = tbody.insertRow(-1);
     var th = document.createElement('th');
     th.scope = "row";
@@ -727,7 +796,7 @@ class Table {
 
       a.addEventListener("click", async (e) => {
         const pageNum = e.target.innerHTML;
-        await this.loadRowsFromDatabase(pageNum, 10, 'desc');
+        await this.loadRowsFromDatabase(pageNum, this.perPage, 'desc', client_id);
         this.currentPage = pageNum;
       });
 
@@ -744,7 +813,7 @@ class Table {
    * Adiciona linhas através de um array de arrays
    */
 
-  async appendExistingRows(rowsArray, perPage, totalPages, currentPage) {
+  async appendExistingRows(rowsArray, perPage, totalPages, currentPage, client_id = null) {
 
     var rows = this.checkRows(rowsArray);
 
@@ -811,7 +880,8 @@ class Table {
       // linha final com a paginação
       var tfoot = tbody.nextElementSibling;
       tfoot.innerHTML = '';
-      this.setPagination(tfoot, totalPages, currentPage);
+
+      this.setPagination(tfoot, totalPages, currentPage, client_id);
 
     }
 
@@ -1065,6 +1135,31 @@ class Table {
   }
 
   /**
+   * Adiciona funcionalidade do filtro por cliente
+   */
+
+  async enableClientFilter(inputDOM, buttonDOM) {
+    var input = this.checkSelector(inputDOM);
+    var button = this.checkSelector(buttonDOM);
+    if (this.clientesAtendimentos.length == 0) this.clientesAtendimentos = await this.fetchClientsAtendimentos();
+    this.autoComplete(input, this.clientesAtendimentos, 'clientfilter');
+    button.addEventListener('click', async (e) => {
+
+      const client_id = input.getAttribute("data-clientfilterid");
+
+      if (!client_id) {
+
+      } else {
+        // trava o botão até que a busca seja concluída
+        button.disabled = true;
+        await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', client_id);
+        button.disabled = false;
+      }
+
+    });
+  }
+
+  /**
    * Habilita o botão para adicionar novas linhas
    * Retorna o HTMLElement do botão
    */
@@ -1172,7 +1267,7 @@ class Table {
           optional.innerHTML = '**não obrigatório.';
           td.appendChild(optional);
 
-        } else if (lowerCaseColName == 'num') {
+        } else if (lowerCaseColName == 'num') { 
 
           var dropdown = document.createElement('div');
           dropdown.className = 'dropdown-menu';
@@ -1218,7 +1313,7 @@ class Table {
 
       // altera funcionalidade do botão para "Salvar"
       var newBtn = e.target.cloneNode(true);
-      newBtn.innerHTML = 'Salvar';
+      newBtn.innerHTML = 'Salvar valores  ';
       e.target.parentNode.replaceChild(newBtn, e.target);
       this.insertAtendimento(newBtn);
     });
