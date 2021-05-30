@@ -12,8 +12,7 @@ class Table {
     this.clientesAtendimentos = [];
 
     // guarda o id do cliente caso o filtro estiver ativo
-    this.currentClientId = null;
-
+    this.currentClientId = null; 
     // número de linhas por página da planilha
     this.perPage = 25;
 
@@ -253,7 +252,7 @@ class Table {
     var headBtn = document.createElement('button');
     headBtn.id = "addRowBtn";
     headBtn.type = "button";
-    headBtn.innerText = "Novo atendimento";
+    headBtn.innerText = "Novo  ";
     this.bootstrapIt(headBtn, "btn btn-primary");
 
     td.appendChild(headBtn);
@@ -263,7 +262,7 @@ class Table {
     // adc campo de busca -- inicio
    
     var td = document.createElement('td');
-    td.setAttribute("colspan", 3);
+    td.setAttribute("colspan", 2);
 
     var searchInput = document.createElement('input');
     searchInput.type = "search";
@@ -283,7 +282,7 @@ class Table {
     tr.appendChild(td);
 
     var td = document.createElement('td');
-    td.setAttribute("colspan", 1);
+    td.setAttribute("colspan", 2);
 
     var searchBtn = document.createElement('button');
     searchBtn.type = "button";
@@ -291,11 +290,19 @@ class Table {
     searchBtn.id = "searchBtn";
     this.bootstrapIt(searchBtn, "btn btn-primary");
 
+    var cleanBtn = document.createElement('button');
+    cleanBtn.type = "button";
+    cleanBtn.className = "btn btn-primary";
+    cleanBtn.innerHTML = "Limpar";
+    cleanBtn.disabled = true;
+    cleanBtn.id = "cleanBtn";
+
     td.appendChild(searchBtn);
+    td.appendChild(cleanBtn);
     tr.appendChild(td);
 
    // adc campo de busca -- fim
-    //
+   
    // adc espaço para mostrar avisos: inserção e busca -- início
     
     var tdErrorWrapper = document.createElement('td');
@@ -720,8 +727,7 @@ class Table {
       }
     }, atendimento_id);
     return td;
-  }
-
+  } 
   /**
    * Completa a ultima página com rows vazio pra não quebrar o scroll
    */
@@ -831,7 +837,12 @@ class Table {
     } else {
       // se não vierem os parametros, a função está sendo chamado no hook do socket.io
       // só adiciono a nova linha se eu estiver na primeira página
+      // se o usuário estiver com um filtro ativo, só adiciono se for referente ao cliente atual
+      
       if (this.currentPage != 1) return;
+      if (this.currentClientId) {
+        if (rowsArray[0].cliente.client_id != this.currentClientId) return;
+      }
       // aqui eu vou chamar a função que marca o registro na tela dos usuários, tipo um activity log
     }
 
@@ -865,6 +876,10 @@ class Table {
             break;
           case "obs":
             var td = this.observacaoCell(row[prop], row['id'].id);
+            break;
+          case "cliente":
+            var td = document.createElement('td');
+            td.innerHTML = row.cliente.name;
             break;
           default:
             var td = document.createElement('td');
@@ -1056,7 +1071,7 @@ class Table {
               this.emitAtendimento(res.atendimento);
 
               var newBtn = e.target.cloneNode(true);
-              newBtn.innerHTML = 'Novo atendimento';
+              newBtn.innerHTML = 'Novo  ';
               e.target.parentNode.replaceChild(newBtn, e.target);
               this.addNewRow(newBtn);
 
@@ -1124,7 +1139,6 @@ class Table {
         // https://stackoverflow.com/a/37098628/14427854
         var evaluateOption = document.evaluate(`//option[contains(., '${this.perPage}')]`, document, null, XPathResult.ANY_TYPE, null );
         var selectedOption = evaluateOption.iterateNext();
-        console.log(selectedOption);
         selectedOption.selected = "selected";
 
       }
@@ -1182,9 +1196,12 @@ class Table {
    * Adiciona funcionalidade do filtro por cliente
    */
 
-  async enableClientFilter(inputDOM, buttonDOM) {
+  async enableClientFilter(inputDOM, buttonDOM, cleanBtnDOM) {
     var input = this.checkSelector(inputDOM);
     var button = this.checkSelector(buttonDOM);
+    var cleanBtn = this.checkSelector(cleanBtnDOM);
+    var errorSpan = this.checkSelector("#error-span");
+
     if (this.clientesAtendimentos.length == 0) this.clientesAtendimentos = await this.fetchClientsAtendimentos();
     this.autoComplete(input, this.clientesAtendimentos, 'clientfilter');
     button.addEventListener('click', async (e) => {
@@ -1192,15 +1209,36 @@ class Table {
       const client_id = input.getAttribute("data-clientfilterid");
 
       if (!client_id) {
-
+        errorSpan.innerHTML = "Selecione o cliente na listagem.";
+        errorSpan.className = "text-warning";
+        input.focus();
       } else {
         // trava o botão até que a busca seja concluída
         button.disabled = true;
+        errorSpan.innerHTML = "Filtrando...";
+        errorSpan.className = "text-info";
+        this.currentClientId = client_id;
         await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', client_id);
         button.disabled = false;
+        cleanBtn.disabled = false;
+        cleanBtn.addEventListener("click", async () => {
+
+          this.currentCliendId = null;
+
+          await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc');
+
+          errorSpan.className = "text-success";
+          errorSpan.innerHTML = "Filtro removido.";
+
+          input.value = "";
+          cleanBtn.disabled = true;
+
+        });
+        errorSpan.innerHTML = "Filtro aplicado.";
+        errorSpan.className = "text-success";
       }
 
-    });
+    }, this);
   }
 
   /**
@@ -1357,7 +1395,7 @@ class Table {
 
       // altera funcionalidade do botão para "Salvar"
       var newBtn = e.target.cloneNode(true);
-      newBtn.innerHTML = 'Salvar valores  ';
+      newBtn.innerHTML = 'Salvar';
       e.target.parentNode.replaceChild(newBtn, e.target);
       this.insertAtendimento(newBtn);
     });

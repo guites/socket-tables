@@ -21,7 +21,14 @@ Informações técnicas:
 
 ## GLITCHES
 
-Resolvido, colocando o form de inserção no cabeçalho.
+*Pendentes*
+
+- Aplica o filtro com o perPage em 10, num cliente que tem 30 entradas. Altera o perPage pra 100 e clica na terceira página => cai numa página com 100% filler rows.
+- Quando um usuário estiver utilizado o filtro, ele já carregou os clientes com atendimento no cache. Se for criado um atendimento pra um cliente diferente dos que existiam, ele não vai aparecer na listagem de clientes pra filtro até que o usuário atualize a página.
+
+*Resolvidos*
+
+- inserção de linhas quando usuário está com o form aberto: resolvido, colocando o form de inserção no cabeçalho.
 ![ordem de inserção por outros usuários](readme/ordem_insercoes.png)
 
 ## Alterações (To-do list da to-do list!)
@@ -29,7 +36,6 @@ Resolvido, colocando o form de inserção no cabeçalho.
 Implementar
 
 - utilizar esquema de popup.
-- Filtro por nome de cliente;
 - Agora que a lista mostra os clientes inativos, avisar na hora de criar OS
   o status do cliente;
 - Remover atendimento / editar atendimento inteiro ?
@@ -45,6 +51,7 @@ Já feito
 - Pop up para confirmar deleção de atendimento;
 - Paginação, mais novos por último, botão de novo atendimento em cima.
 - Adicionar campo com o nome do atendente (deixar pré-populado via cookie/sessão): optei por um cookie js até que seja definido a forma como vai ser autenticado nos envios pro sortweb. Depois, posso pensar em um sistema de login pra gerar uma chave no sort, algo do tipo.
+- Filtro por nome de cliente;
 
 #### DB MIGRATIONS
 

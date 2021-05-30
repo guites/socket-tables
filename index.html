@@ -167,7 +167,7 @@
       table.createTable();
       table.loadRowsFromDatabase(1, table.perPage, 'desc');
       var addRowBtn = table.addNewRow('#addRowBtn');
-      var searchInput = table.enableClientFilter('#searchInput', '#searchBtn');
+      var searchInput = table.enableClientFilter('#searchInput', '#searchBtn', '#cleanBtn');
       table.generateConfirmModal("body", "#scripts");
       table.defineUser("#openConfiguracoesBtn");
     </script>
