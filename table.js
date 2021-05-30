@@ -67,7 +67,7 @@ class Table {
       var small = dropdown_menu.nextElementSibling;
       if (small) {
         small.innerHTML = "Atualizado.";
-        small.className = "text-warning";
+        small.className = "d-block text-warning";
       }
       if (dropdown_menu) {
         dropdown_menu.innerHTML = '';
