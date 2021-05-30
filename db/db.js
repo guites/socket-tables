@@ -14,6 +14,14 @@ async function getAllClients() {
   return clients;
 }
 
+async function getClientsAtendimentos() {
+  const clients = await query(
+    //`SELECT sort_id, name FROM clientes WHERE sort_id IN (SELECT client_id FROM atendimentos)`
+    `SELECT c.sort_id, c.name, COUNT(1) as count FROM atendimentos a LEFT JOIN clientes c ON c.sort_id = a.client_id GROUP BY c.sort_id`
+  );
+  return clients;
+}
+
 async function getAllUsers() {
   const users = await query(
     `SELECT sort_id as id, username as usuario FROM usuarios WHERE active = 1`,
@@ -36,10 +44,14 @@ async function getAllStatus() {
   return statuses;
 }
 
-async function countAtendimentos() {
+async function countAtendimentos(client_id = null) {
 
+  let sql;
+  if (!client_id) sql = `SELECT COUNT(*) as count FROM atendimentos WHERE status_id != 3`;
+  if (client_id) sql = `SELECT COUNT(*) as count FROM atendimentos WHERE status_id != 3 AND client_id = ?`;
   const count = await query (
-    `SELECT COUNT(*) as count FROM atendimentos WHERE status_id != 3`
+    sql,
+    [client_id]
   );
 
   return count;
@@ -62,6 +74,33 @@ async function getAllAtendimentos() {
     WHERE s.id != 3
     ORDER BY atd.id DESC`
   );
+  return atendimentos;
+}
+
+async function getAtendimentosByClient(pg = 0, lmt = 25, order = 'DESC', client_id) {
+
+  // sobre o .toString() ali, depois de eu ter verificado se era um número válido,
+  // https://github.com/sidorares/node-mysql2/issues/1239#issuecomment-760314979
+  
+  const atendimentos = await query (
+ `SELECT atd.id as id,
+  u.username as usuario,
+  s.name as status,
+  c.name,
+  atd.ticket,
+  DATE_FORMAT(atd.data_atendimento,'%d/%m/%y') as data_atendimento,
+  DATE_FORMAT(atd.data_retorno,'%d/%m/%y') as data_retorno,
+  atd.plataforma,
+  atd.obs FROM atendimentos atd
+  INNER JOIN clientes c ON c.sort_id = atd.client_id 
+  INNER JOIN status s ON atd.status_id = s.id
+  LEFT JOIN usuarios u ON u.sort_id = atd.user_id
+  WHERE s.id != 3
+  AND c.sort_id = ?
+  ORDER BY atd.id ${order}
+  LIMIT ?
+  OFFSET ?`,
+  [client_id, lmt.toString(), pg.toString()] );
   return atendimentos;
 }
 
@@ -127,9 +166,11 @@ async function insertAtendimento(atd) {
 module.exports = {
   getAllClients,
   getAllUsers,
+  getClientsAtendimentos,
   getUserById,
   getAllAtendimentos,
   getAtendimentos,
+  getAtendimentosByClient,
   countAtendimentos,
   insertAtendimento,
   updateAtendimento,
