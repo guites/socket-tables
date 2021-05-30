@@ -78,14 +78,29 @@
         <div class="card border-warning rounded-0 mb-3" >
           <div class="card-header">Configurações</div>
           <div class="card-body">
-            <h4 class="card-title">Defina seu usuário</h4>
-            <p class="card-text">O nome de usuário colocado aqui será utilizado no registro de suas atividades.</p>
-              <div class="form-group">
-                <label for="defineUsuario" class="form-label mt-4">Selecione seu nome na lista.</label>
-                <select class="form-select" id="defineUsuario" style="max-width:20rem;">
-                </select>
-                <small></small>
-              </div>
+            <h5 class="card-title">Usuário</h5>
+            <p class="card-text">Defina o nome de usuário utilizado no registro de suas atividades.</p>
+            <div class="form-group">
+              <label for="defineUsuario" class="form-label mt-0">Selecione seu nome na lista.</label>
+              <select class="form-select" id="defineUsuario" style="max-width:20rem;">
+              </select>
+              <small></small>
+            </div>
+            <h5 class="card-title mt-4">Paginação</h5>
+            <p class="card-text">Defina a quantidade de resultados por página.</p>
+            <div class="form-group">
+              <label for="definePaginacao" class="form-label mt-0">Selecione uma quantidade na lista.</label>
+              <select class="form-select" id="definePaginacao" style="max-width:20rem;">
+                <option>10</option>
+                <option>15</option>
+                <option>20</option>
+                <option>25</option>
+                <option>50</option>
+                <option>75</option>
+                <option>100</option>
+              </select>
+              <small class="text-warning">Valores maiores de 50 podem causar lentidão!</small>
+            </div>
           </div>
         </div>
       </div>

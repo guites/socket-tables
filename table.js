@@ -221,6 +221,8 @@ class Table {
     this.bootstrapIt(table, 'table table-hover');
     table.setAttribute('id', 'todo-table');
 
+    this.setPerPageFromCookie();
+
     var caption = document.createElement('caption');
     caption.innerHTML = 'Atendimentos';
     table.appendChild(caption);
@@ -1114,7 +1116,49 @@ class Table {
           }
         });
       }
+
+      var selectPaginacao = this.checkSelector('#definePaginacao');
+      var smallPaginacao = this.checkSelector(selectPaginacao.nextElementSibling);
+      if(this.setPerPageFromCookie()) {
+
+        // https://stackoverflow.com/a/37098628/14427854
+        var evaluateOption = document.evaluate(`//option[contains(., '${this.perPage}')]`, document, null, XPathResult.ANY_TYPE, null );
+        var selectedOption = evaluateOption.iterateNext();
+        console.log(selectedOption);
+        selectedOption.selected = "selected";
+
+      }
+      selectPaginacao.addEventListener("change", (e) => {
+
+        // vou usar um client side cookie pq por enquanto o servidor é reiniciado diariamente.
+        const expires = new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000).toGMTString();
+        const paginacaoNum = selectPaginacao.value;
+        document.cookie = `cookie_planilha_perpage=${paginacaoNum};expires=${expires};path=/;Secure`;
+        if (this.setPerPageFromCookie()) {
+          smallPaginacao.innerHTML = "Preferência salva com sucesso.";
+          smallPaginacao.className = "text-success";
+        } else {
+          smallPaginacao.innerHTML = "Ocorreu um erro ao salvar sua configuração. Verifique a aba Armazenamento no FireFox ou <a href='https://support.google.com/chrome/answer/95647?co=GENIE.Platform%3DDesktop&hl=pt-BR' rel='noopener'>limpe seus cookies no google chrome, e tente novamente.</a>";
+          smallPaginacao.className = "text-danger";
+        }
+
+      })
     });
+  }
+
+  /**
+   * Puxa o perPage do cookie
+   */
+
+  setPerPageFromCookie() {
+    const c = document.cookie.match(`(^|;)\\s*cookie_planilha_perpage\\s*=\\s*([^;]+)`);
+    if (c) {
+      const cookie = c.pop();
+      this.perPage = cookie;
+      return true;
+    }
+    // no cookie t_t
+    return false
   }
 
   /**
