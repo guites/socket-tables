@@ -7,6 +7,7 @@ class Table {
     );
     this.parentElement = this.checkSelector('#table-wrapper');
     this.clients = [];
+    this.usuarios = [];
     this.statuses = [];
     this.apiURL = 'http://localhost:3000/';
     this.currentPage = 1;
@@ -163,6 +164,23 @@ class Table {
       return clients_list;
     });
     return clients_list;
+  }
+
+  /**
+   * Carrega os usuarios cadastrados no banco
+   */
+
+  async fetchUsuarios() {
+    var usuarios_list = await fetch(this.apiURL + 'api/users')
+    .then((res) => res.json())
+    .then((r) => {
+      var usuarios_list = [];
+      r.forEach((user) => {
+        usuarios_list.push([user.id, user.usuario]);
+      });
+      return usuarios_list;
+    });
+    return usuarios_list;
   }
 
   /**
@@ -875,6 +893,17 @@ class Table {
           validation.message = `O campo Cliente deve estar relacionado a um id válido.`;
         }
         break;
+      case "user_id":
+        if (input.value.trim() == '') {
+          validation.valid = false;
+          validation.message = `O campo Atendente não pode estar vazio.`;
+        }
+        var usuario_id = input.getAttribute('data-usuarioid');
+        if (!usuario_id) {
+          validation.valid = false;
+          validation.message = `O campo Atendente deve estar relacionado a um id válido.`;
+        }
+        break;
       default:
         if (input.value.trim() == '') {
           validation.valid = false;
@@ -913,6 +942,9 @@ class Table {
           inputs[x].classList.add('is-valid');
           if (inputs[x].name == 'client_id') {
             atdPayload[inputs[x].name] = inputs[x].getAttribute('data-clientid');
+            atdPayload['name'] = inputs[x].value;
+          } else if (inputs[x].name == 'user_id') {
+            atdPayload[inputs[x].name] = inputs[x].getAttribute('data-usuarioid');
             atdPayload['name'] = inputs[x].value;
           } else {
             atdPayload[inputs[x].name] = inputs[x].value;
@@ -1006,9 +1038,21 @@ class Table {
             input.value = "1";
             break;
           case "num":
-            input.disabled = "true";
-            input.name = "id";
-            input.type = "hidden";
+
+            // hack chinelão!! vou usar esse espaço pra colocar o nome do atendente.
+            input.name = "user_id";
+            input.type = 'text';
+            input.placeholder = 'Atendente';
+            input.value = "guilhermea";
+            input.id = "usuarios_dropdown";
+            input.required = "true";
+            input.classList.add("dropdown-toggle");
+            input.setAttribute("data-bs-toggle","dropdown");
+            input.setAttribute("aria-expanded", false);
+
+            //input.disabled = "true";
+            //input.name = "id";
+            //input.type = "hidden";
             break;
           case "# ticket":
             input.title = "Preencha caso já existir uma OS referente a este atendimento.";
@@ -1057,28 +1101,52 @@ class Table {
         var td = document.createElement('td');
         td.style.verticalAlign = "top";
         td.appendChild(input);
-        if (col.toLowerCase().trim() == 'cliente') {
+        const lowerCaseColName = col.toLowerCase().trim();
+
+        if (lowerCaseColName == 'cliente') {
+
           var dropdown = document.createElement('div');
           dropdown.className = 'dropdown-menu';
           dropdown.role = "menu";
           td.appendChild(dropdown);
-        } else if (col.toLowerCase().trim() == '# ticket') {
+
+        } else if (lowerCaseColName == '# ticket') {
+
           var optional = document.createElement('small');
           optional.className = 'text-info';
           optional.innerHTML = '**não obrigatório.';
           td.appendChild(optional);
+
+        } else if (lowerCaseColName == 'num') {
+
+          var dropdown = document.createElement('div');
+          dropdown.className = 'dropdown-menu';
+          dropdown.role = "menu";
+          td.appendChild(dropdown);
+
+          var optional = document.createElement('small');
+          optional.className = 'text-info';
+          optional.innerHTML = '**nome do atendente.';
+          td.appendChild(optional);
+
         }
         tr.appendChild(td);
       });
-      var cliente_input = document.querySelector('#cliente_dropdown');
 
       // adiciona autoComplete no input "cliente": se eu já tiver utilizado a fetchClients(), pego o que tiver na memória
+      var cliente_input = document.querySelector('#cliente_dropdown');
       if (this.clients.length == 0) this.clients = await this.fetchClients();
+      this.autoComplete(cliente_input, this.clients, 'client');
 
+      // adiciona autoComplete no input "atendente": se eu já tiver utilizado a fetchUsuarios(), pego o que tiver na memória
+      var usuarios_input = document.querySelector('#usuarios_dropdown');
+      if (this.usuarios.length == 0) this.usuarios = await this.fetchUsuarios();
+      this.autoComplete(usuarios_input, this.usuarios, 'usuario');
 
-      this.autoComplete(cliente_input, this.clients);
        
-      // põe o foco no input "cliente"
+      // põe o foco no input "cliente", mas antes clica no input "atendente"
+      // essa gambiarra vai me causar problemas mais pra frente.
+      usuarios_input.click();
       cliente_input.focus();
       cliente_input.click();
 
@@ -1098,7 +1166,7 @@ class Table {
    * data = 
    */
 
-  autoComplete(campo, data) {
+  autoComplete(campo, data, identificador) {
 
     var input = this.checkSelector(campo);
 
@@ -1116,7 +1184,7 @@ class Table {
 
       e.target.setAttribute('aria-expanded', false);
 
-      e.target.setAttribute('data-clientid', "");
+      e.target.setAttribute(`data-${identificador}id`, "");
     
       if (suggestions_list.classList.contains('show')) {
         e.target.classList.remove('show');
@@ -1124,25 +1192,30 @@ class Table {
       }
       if (incoming == '') return;
 
-      var suggestions = data.filter(client => client[1].includes(incoming.toUpperCase()));
+      if (identificador == 'usuario') {
+        var suggestions = data.filter(usuario => usuario[1].includes(incoming));
+      } else {
+        var suggestions = data.filter(client => client[1].includes(incoming.toUpperCase()));
+      }
       if (suggestions.length > 0) {
 
         e.target.setAttribute('aria-expanded', true);
+
+        var divider = document.createElement('div');
+        divider.classname = 'dropdown-divider';
 
         suggestions.forEach((sug) => {
 
           var a = document.createElement('a');
           a.href = "javascript:void(0)";
           a.className = 'dropdown-item';
-          a.setAttribute('data-clientid', sug[0]);
+          a.setAttribute(`data-${identificador}id`, sug[0]);
           a.innerHTML = sug[1];
 
-          var divider = document.createElement('div');
-          divider.classname = 'dropdown-divider';
 
           a.addEventListener('click', (ev) => {
             e.target.value = ev.target.textContent;
-            e.target.setAttribute('data-clientid', ev.target.getAttribute('data-clientid'));
+            e.target.setAttribute(`data-${identificador}id`, ev.target.getAttribute(`data-${identificador}id`));
             e.target.click();
           });
 
