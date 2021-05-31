@@ -26,6 +26,9 @@ Informações técnicas:
 - Aplica o filtro com o perPage em 10, num cliente que tem 30 entradas. Altera o perPage pra 100 e clica na terceira página => cai numa página com 100% filler rows.
 - Quando um usuário estiver utilizado o filtro, ele já carregou os clientes com atendimento no cache. Se for criado um atendimento pra um cliente diferente dos que existiam, ele não vai aparecer na listagem de clientes pra filtro até que o usuário atualize a página.
 - Alguns clientes quando são colocados no filtro, retornam a listagem com todas as linhas filler (possivelmente pq os atendimentos deles estão todos deletados)
+- Evitar que a pessoa possa enviar várias vezes o mesmo filtro, por ex, travar o filtro pelo cliente que já está sendo filtrado...
+- Quando entra no campo cliente sem clicar, dá aquele proble a do bootstrap que precisa de um .click()
+- Após uso do filtro e remoção, verificar se os hooks do socket voltam a funcionar normalmente.
 
 *Resolvidos*
 

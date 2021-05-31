@@ -1225,7 +1225,7 @@ class Table {
         cleanBtn.disabled = false;
         cleanBtn.addEventListener("click", async () => {
 
-          this.currentCliendId = null;
+          this.currentClientId = null;
           input.setAttribute('data-clientfilterid', 0);
 
           await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc');
