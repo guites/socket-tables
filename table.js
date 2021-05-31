@@ -18,7 +18,7 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://localhost:3000/';
+    this.apiURL = 'http://192.168.10.104:3000/';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -41,13 +41,15 @@ class Table {
      * Lida com o recebimento da emitAddTicket
      */
     var updated = document.querySelector(`#addTicketBtn_${addedTicket.id}`);
-    updated.innerHTML = addedTicket.ticket;
-    this.bootstrapIt(updated, 'btn btn-light disabled');
-    updated.classList.remove('btn-primary');
-    var small = updated.nextElementSibling;
-    if (small) {
-      small.innerHTML = "Atualizado.";
-      small.className = "text-warning";
+    if (updated) {
+      updated.innerHTML = addedTicket.ticket;
+      this.bootstrapIt(updated, 'btn btn-light disabled');
+      updated.classList.remove('btn-primary');
+      var small = updated.nextElementSibling;
+      if (small) {
+        small.innerHTML = "Atualizado.";
+        small.className = "text-warning";
+      }
     }
   }
 
@@ -1121,7 +1123,7 @@ class Table {
           const expires = new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000).toGMTString();
           const planilhaUserId = select.options[ select.selectedIndex ].getAttribute("data-usuarioid");
           const planilhaUserName = select.value;
-          document.cookie = `cookie_planilha_usuario=${planilhaUserName}_${planilhaUserId};expires=${expires};path=/;Secure`;
+          document.cookie = `cookie_planilha_usuario=${planilhaUserName}_${planilhaUserId};expires=${expires};path=/;`;
           if (this.setUsuarioFromCookie()) {
             small.innerHTML = "Usuário salvo com sucesso.";
             small.className = "text-success";
@@ -1147,7 +1149,7 @@ class Table {
         // vou usar um client side cookie pq por enquanto o servidor é reiniciado diariamente.
         const expires = new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000).toGMTString();
         const paginacaoNum = selectPaginacao.value;
-        document.cookie = `cookie_planilha_perpage=${paginacaoNum};expires=${expires};path=/;Secure`;
+        document.cookie = `cookie_planilha_perpage=${paginacaoNum};expires=${expires};path=/;`;
         if (this.setPerPageFromCookie()) {
           smallPaginacao.innerHTML = "Preferência salva com sucesso.";
           smallPaginacao.className = "text-success";
