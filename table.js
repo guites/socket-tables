@@ -6,9 +6,21 @@ class Table {
       ['Num', 'Status', 'Cliente', '# Ticket', 'Data - Atendimento', 'Data - Retorno', 'Plataforma', 'Observação']
     );
     this.parentElement = this.checkSelector('#table-wrapper');
+    // listagem de todos os clientes
     this.clients = [];
+    // listagem dos clientes que possuem atendimento, para o filtro
+    this.clientesAtendimentos = [];
+
+    // guarda o id do cliente caso o filtro estiver ativo
+    this.currentClientId = null; 
+    // número de linhas por página da planilha
+    this.perPage = 25;
+
+    this.usuarios = [];
     this.statuses = [];
     this.apiURL = 'http://localhost:3000/';
+    this.currentPage = 1;
+    this.usuario = {};
   }
 
   /**
@@ -57,17 +69,23 @@ class Table {
      */
 
     var updated = document.getElementById(`dropdownMenuButton_${newStatus.id}`);
-    updated.innerHTML = newStatus.status_name;
-    var dropdown_menu = updated.nextElementSibling;
-    var small = dropdown_menu.nextElementSibling;
-    console.log(small);
-    if (small) {
-      small.innerHTML = "Atualizado.";
-      small.className = "text-warning";
+
+    if (updated) {
+      // o atendimento atualizado está na página
+      updated.innerHTML = newStatus.status_name;
+      var dropdown_menu = updated.nextElementSibling;
+      var small = dropdown_menu.nextElementSibling;
+      if (small) {
+        small.innerHTML = "Atualizado.";
+        small.className = "d-block text-warning";
+      }
+      if (dropdown_menu) {
+        dropdown_menu.innerHTML = '';
+      }
+    } else {
+      // o atendimento atualizado não está na página..
     }
-    if (dropdown_menu) {
-      dropdown_menu.innerHTML = '';
-    }
+
   }
 
   emitAtualizaObs(newObs) {
@@ -87,11 +105,15 @@ class Table {
      */
 
     var updated = document.querySelector(`[data-atendimentoid="${newObs.id}"]`);
-    updated.value = newObs.obs;
-    var small = updated.nextElementSibling;
-    if (small) {
-      small.innerHTML = "Atualizado.";
-      small.className = "text-warning";
+    if (updated) {
+      updated.value = newObs.obs;
+      var small = updated.nextElementSibling;
+      if (small) {
+        small.innerHTML = "Atualizado.";
+        small.className = "text-warning";
+      }
+    } else {
+      // o atendimento atualizado não está na página..
     }
   }
 
@@ -155,6 +177,40 @@ class Table {
   }
 
   /**
+   * Carrega os clientes com atendimento no banco
+   */
+
+  async fetchClientsAtendimentos() {
+    this.clientesAtendimentos = [];
+    var clients_list = await fetch(this.apiURL + 'api/clients/atendimentos')
+    .then((res) => res.json())
+    .then((r) => {
+      var clients_list = [];
+      r.forEach((client) => {
+        clients_list.push([client.sort_id, client.name.toUpperCase(), client.count]);
+      });
+      return clients_list;
+    });
+    return clients_list;
+  }
+  /**
+   * Carrega os usuarios cadastrados no banco
+   */
+
+  async fetchUsuarios() {
+    var usuarios_list = await fetch(this.apiURL + 'api/users')
+    .then((res) => res.json())
+    .then((r) => {
+      var usuarios_list = [];
+      r.forEach((user) => {
+        usuarios_list.push([user.id, user.usuario]);
+      });
+      return usuarios_list;
+    });
+    return usuarios_list;
+  }
+
+  /**
    * Cria a estrutura básica da tabela
    */
 
@@ -164,12 +220,18 @@ class Table {
     this.bootstrapIt(table, 'table table-hover');
     table.setAttribute('id', 'todo-table');
 
+    this.setPerPageFromCookie();
+
     var caption = document.createElement('caption');
     caption.innerHTML = 'Atendimentos';
     table.appendChild(caption);
 
     var header = document.createElement('thead');
-    var tr = header.insertRow(-1);
+
+    
+    // adc nome das colunas -- início
+    
+    var tr = header.insertRow(0);
 
     this.columns.forEach((col) => {
       var th = document.createElement('th');
@@ -178,54 +240,139 @@ class Table {
       tr.appendChild(th);
     });
 
+    // adc nome das colunas -- fim
+    // adc botao para inserir linha -- início
+    
+    var tr = header.insertRow(1);
+
+    var td = document.createElement('td');
+    td.setAttribute("colspan", 2);
+
+
+    var headBtn = document.createElement('button');
+    headBtn.id = "addRowBtn";
+    headBtn.type = "button";
+    headBtn.innerText = "Novo  ";
+    this.bootstrapIt(headBtn, "btn btn-primary");
+
+    td.appendChild(headBtn);
+    tr.appendChild(td);
+
+    // adc botao para inserir linha -- fim
+    // adc campo de busca -- inicio
+   
+    var td = document.createElement('td');
+    td.setAttribute("colspan", 2);
+
+    var searchInput = document.createElement('input');
+    searchInput.type = "search";
+    searchInput.id = "searchInput";
+    searchInput.placeholder = "Filtrar por cliente";
+    searchInput.classList.add("dropdown-toggle");
+    searchInput.setAttribute("data-bs-toggle","dropdown");
+    searchInput.setAttribute("aria-expanded", false);
+    this.bootstrapIt(searchInput, "form-control me-sm-2");
+
+    var dropdown = document.createElement('div');
+    dropdown.className = 'dropdown-menu';
+    dropdown.role = "menu";
+
+    td.appendChild(searchInput);
+    td.appendChild(dropdown);
+    tr.appendChild(td);
+
+    var td = document.createElement('td');
+    td.setAttribute("colspan", 2);
+
+    var searchBtn = document.createElement('button');
+    searchBtn.type = "button";
+    searchBtn.innerHTML = "Filtrar";
+    searchBtn.id = "searchBtn";
+    this.bootstrapIt(searchBtn, "btn btn-primary");
+
+    var cleanBtn = document.createElement('button');
+    cleanBtn.type = "button";
+    cleanBtn.className = "btn btn-primary";
+    cleanBtn.innerHTML = "Limpar";
+    cleanBtn.disabled = true;
+    cleanBtn.id = "cleanBtn";
+
+    td.appendChild(searchBtn);
+    td.appendChild(cleanBtn);
+    tr.appendChild(td);
+
+   // adc campo de busca -- fim
+   
+   // adc espaço para mostrar avisos: inserção e busca -- início
+    
+    var tdErrorWrapper = document.createElement('td');
+    tdErrorWrapper.setAttribute("colspan", 4);
+    tdErrorWrapper.innerHTML = `<span role='alert' id='error-span' aria-hidden="true" class="text-warning"></span>`;
+    tr.appendChild(tdErrorWrapper);
+
+    // adc espaço para mostrar avisos: inserção e busca -- fim
+
+
     table.appendChild(header);
 
     var tbody = document.createElement('tbody');
     table.appendChild(tbody);
 
     var tfoot = document.createElement('tfoot');
-    var tr = tfoot.insertRow(-1);
-
-    var td = document.createElement('td');
-    td.setAttribute("colspan", 5);
-
-    var tdErrorWrapper = document.createElement('td');
-    tdErrorWrapper.setAttribute("colspan", 4);
-    tdErrorWrapper.innerHTML = `<span role='alert' id='error-span' aria-hidden="true" class="text-warning"></span>`;
-
-    var footBtn = document.createElement('button');
-    footBtn.id = "addRowBtn";
-    footBtn.type = "button";
-    footBtn.innerText = "Novo atendimento";
-    this.bootstrapIt(footBtn, "btn btn-primary");
-
-    td.appendChild(footBtn);
-    tr.appendChild(td);
-    tr.appendChild(tdErrorWrapper);
     table.appendChild(tfoot);
 
     this.parentElement.appendChild(table);
   }
 
-  async loadRowsFromDatabase() {
+  /**
+   * Puxa atendimentos do banco de dados baseado nos parametros de paginação
+   * extendi pra aceitar o id de cliente, uso na paginação
+   */
+
+  async loadRowsFromDatabase(pg = 1, lmt = this.perPage, order = 'desc', client_id = null) {
+
+    const allowed_orders = ['desc', 'asc'];
+    const page = parseInt(pg);
+    const limit = parseInt(lmt);
+
+    if ( isNaN(page) || isNaN(limit) || allowed_orders.indexOf(order) == -1 ) {
+      throw new TypeError("Valores inválidos passados na paginação!");
+      return;
+    }
 
     // pega atendimentos cadastrados no banco
 
-    var existingRows = await fetch(this.apiURL + 'api/atendimentos')
+    var existingRows = await fetch(this.apiURL + 'api/atendimentos?page=' + page + '&limit=' + limit + '&order=' + order + "&client_id=" + client_id)
     .then((res) => res.json())
     .then((r) => {
       var atendimentos = [];
-      r.forEach((atd) => {
-        //atendimentos.push([atd.id,atd.status, atd.name, atd.ticket, atd.data_atendimento, atd.data_retorno, atd.plataforma, atd.obs]);
-        atendimentos.push(atd);
+      r.atendimentos.forEach((atd) => {
+        atendimentos.push(
+          {
+            id: {
+              id: atd.id,
+              usuario: atd.usuario,
+            },
+            status: atd.status,
+            name: atd.name,
+            name: atd.name,
+            ticket: atd.ticket,
+            data_atendimento: atd.data_atendimento,
+            data_retorno: atd.data_retorno,
+            plataforma: atd.plataforma,
+            obs: atd.obs
+          });
+        //atendimentos.push(atd);
       });
-      return atendimentos;
+      return {atendimentos, count: r.count};
     });
 
+    var totalPages = Math.ceil(existingRows.count / limit);
+    var currentPage = page;
 
     // monta os atendimentos na tabela
 
-    this.appendExistingRows(existingRows);
+    this.appendExistingRows(existingRows.atendimentos, this.perPage, totalPages, currentPage, client_id);
   }
 
   /**
@@ -234,6 +381,10 @@ class Table {
    */
 
   regenerateStatus() {
+    /**
+     * Fora de uso, após alterar status o usuário precisa
+     * atualizar a pagina se quiser alterar novamente
+     */
 
   }
 
@@ -263,9 +414,7 @@ class Table {
         small.className = "d-block text-success";
         button.innerHTML = e.target.firstChild.innerHTML;
         dropdown_menu.innerHTML = '';
-        this.emitAtualizaStatus({id: atendimento_id, status_id: e.target.id});
-
-        // aqui, eu teria que filtrar novamente dentre os status existentes,
+        this.emitAtualizaStatus({id: atendimento_id, status_id: e.target.id}); // aqui, eu teria que filtrar novamente dentre os status existentes,
         // gerar o html dos dropdown_itens e adicionar os event listeners...
 
       }
@@ -406,24 +555,16 @@ class Table {
     td.appendChild(dropdown_menu);
     td.appendChild(small);
     return td;
-    }
+  }
 
+  /**
+   * Funcionalidade para o campo Num na tabela
+   * mostrar nome do atendente no hover / clique
+   */
 
+  numCell(cell, atendimento_id) {
 
-
-
-   // td.innerHTML = `
-   //   <div class="dropdown" >
-   //     <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-   //       ${cell}
-   //     </button>
-   //     <div style="min-width:0; max-width:5rem;" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-   //     ${dropdown_itens}
-   //     </div>
-   //   </div>
-   // `;
-
-
+  }
 
   /**
    * Funcionalidade para o campo ticket na tabela
@@ -516,8 +657,10 @@ class Table {
       td.appendChild(btn);
       td.appendChild(small);
     } else {
+
       var td = document.createElement('td');
       td.innerHTML = "<a target='_blank' href='https://app.sortweb.me/tasks/adminTaskView/" + cell + "'>" + cell + "</a>";
+
     }
 
     return td;
@@ -584,17 +727,124 @@ class Table {
       }
     }, atendimento_id);
     return td;
+  } 
+  /**
+   * Completa a ultima página com rows vazio pra não quebrar o scroll
+   */
+  fillerRows(perPage, rowslength, tbody) {
+
+    for (var y = 0; y < (perPage - rowslength); y++) {
+      var tr = tbody.insertRow(-1);
+      for (var yy = 0; yy < this.columns.length; yy++) {
+        var td = document.createElement('td');
+        switch (this.columns[yy]) {
+          case "Num":
+            var td = document.createElement('th');
+            td.scope = "row";
+            td.innerHTML = 'xx';
+            break;
+          case "Status":
+            var td = document.createElement('td');
+            td.innerHTML = '<button disabled="" type="button" class="btn btn-secondary btn-sm d-block">xxxxxx</button>';
+            break;
+          case "# Ticket":
+            var td = document.createElement('td');
+            td.innerHTML = '<button disabled="" type="button" class="btn btn-secondary btn-sm d-block">xxxxxx</button>';
+            break;
+          case "Observação":
+            var td = document.createElement('td');
+            td.innerHTML = '<textarea disabled="" class="form-control border" data-atendimentoid="22"></textarea>';
+            break;
+          case "Data - Atendimento":
+            var td = document.createElement('td');
+            td.innerHTML = 'xx/xx/xxxx';
+            break;
+          case "Data - Retorno":
+            var td = document.createElement('td');
+            td.innerHTML = 'xx/xx/xxxx';
+            break;
+          default:
+            var td = document.createElement('td');
+            td.innerHTML = 'xxxx';
+        }
+        tr.appendChild(td);
+      }
+    }
+
+  }
+
+  /**
+   * adiciona linha final com paginação
+   */
+  setPagination(tbody, totalPages, currentPage, client_id) {
+    var tr = tbody.insertRow(-1);
+    var th = document.createElement('th');
+    th.scope = "row";
+    th.innerHTML = "Paginação";
+    tr.appendChild(th);
+
+    var td = document.createElement('td');
+    td.setAttribute("colspan",7);
+    var ul = document.createElement('ul');
+    ul.className = "pagination pagination";
+    td.appendChild(ul);
+
+    for (var i = 1; i <= totalPages; i ++) { 
+
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+      a.className = "page-link";
+      a.href = "#";
+      a.innerHTML = i;
+      if (i == currentPage) {
+        li.className = "page-item active";
+      } else {
+        li.className = "page-item";
+      }
+
+      a.addEventListener("click", async (e) => {
+        const pageNum = e.target.innerHTML;
+        await this.loadRowsFromDatabase(pageNum, this.perPage, 'desc', client_id);
+        this.currentPage = pageNum;
+      });
+
+      li.appendChild(a);
+      ul.appendChild(li);
+
+    }
+
+    tr.appendChild(td);
+
   }
 
   /**
    * Adiciona linhas através de um array de arrays
    */
 
-  async appendExistingRows(rowsArray) {
+  async appendExistingRows(rowsArray, perPage, totalPages, currentPage, client_id = null) {
 
     var rows = this.checkRows(rowsArray);
-    
+
     var tbody = document.querySelector('#todo-table > tbody');
+
+    var perPage = parseInt(perPage);
+    var totalPages = parseInt(totalPages);
+    var currentPage = parseInt(currentPage);
+
+    //se vierem os parametros da paginação, limpo a planilha
+    if (!(isNaN(perPage) || isNaN(totalPages) || isNaN(currentPage))) {
+      tbody.innerHTML = "";
+    } else {
+      // se não vierem os parametros, a função está sendo chamado no hook do socket.io
+      // só adiciono a nova linha se eu estiver na primeira página
+      // se o usuário estiver com um filtro ativo, só adiciono se for referente ao cliente atual
+      
+      if (this.currentPage != 1) return;
+      if (this.currentClientId) {
+        if (rowsArray[0].cliente.client_id != this.currentClientId) return;
+      }
+      // aqui eu vou chamar a função que marca o registro na tela dos usuários, tipo um activity log
+    }
 
     // carrega os status regitrados no banco:
     // se eu já tiver utilizado a fetchStatus(), pego o que tiver na memória
@@ -602,22 +852,34 @@ class Table {
     if (this.statuses.length == 0) this.statuses = await this.fetchStatus();
 
     rows.forEach((row) => {
-      var tr = tbody.insertRow(-1);
+
+      if (!(isNaN(perPage) || isNaN(totalPages) || isNaN(currentPage))) {
+        var tr = tbody.insertRow(-1);
+      } else {
+        var tr = tbody.insertRow(0);
+      }
       for (const prop in row) {
         switch (prop) {
           case "id":
             var td = document.createElement('th');
             td.scope = "row";
-            td.innerHTML = row[prop];
+            td.innerHTML = `<span class="d-block">${row[prop].id}</span>`;
+            if (row[prop].usuario) {
+              td.innerHTML += `<small class="text-primary">${row[prop].usuario}</small>`;
+            }
             break;
           case "status":
-            var td = this.statusCell(row[prop], row['id']);
+            var td = this.statusCell(row[prop], row['id'].id);
             break;
           case "ticket":
-            var td = this.ticketCell(row[prop], row['id']);
+            var td = this.ticketCell(row[prop], row['id'].id);
             break;
           case "obs":
-            var td = this.observacaoCell(row[prop], row['id']);
+            var td = this.observacaoCell(row[prop], row['id'].id);
+            break;
+          case "cliente":
+            var td = document.createElement('td');
+            td.innerHTML = row.cliente.name;
             break;
           default:
             var td = document.createElement('td');
@@ -626,6 +888,19 @@ class Table {
         tr.appendChild(td);
       }
     }, this.statuses);
+
+    if (!(isNaN(perPage) || isNaN(totalPages) || isNaN(currentPage))) {
+
+      //completa rows na última página pra não quebrar o scroll quando clica pra mudar de página
+      this.fillerRows(perPage, rows.length, tbody);
+
+      // linha final com a paginação
+      var tfoot = tbody.nextElementSibling;
+      tfoot.innerHTML = '';
+
+      this.setPagination(tfoot, totalPages, currentPage, client_id);
+
+    }
 
   }
 
@@ -704,6 +979,17 @@ class Table {
           validation.message = `O campo Cliente deve estar relacionado a um id válido.`;
         }
         break;
+      case "user_id":
+        if (input.value.trim() == '') {
+          validation.valid = false;
+          validation.message = `O campo Atendente não pode estar vazio.`;
+        }
+        var usuario_id = input.getAttribute('data-usuarioid');
+        if (!usuario_id) {
+          validation.valid = false;
+          validation.message = `O campo Atendente deve estar relacionado a um id válido.`;
+        }
+        break;
       default:
         if (input.value.trim() == '') {
           validation.valid = false;
@@ -743,6 +1029,9 @@ class Table {
           if (inputs[x].name == 'client_id') {
             atdPayload[inputs[x].name] = inputs[x].getAttribute('data-clientid');
             atdPayload['name'] = inputs[x].value;
+          } else if (inputs[x].name == 'user_id') {
+            atdPayload[inputs[x].name] = inputs[x].getAttribute('data-usuarioid');
+            atdPayload['name'] = inputs[x].value;
           } else {
             atdPayload[inputs[x].name] = inputs[x].value;
           }
@@ -777,12 +1066,12 @@ class Table {
               formRow.remove();
 
               errorWrapper.className = 'text-info';
-              errorWrapper.innerHTML = `<small>Atendimento de ID ${res.atendimento.id} adicionado com sucesso.</small>`;
+              errorWrapper.innerHTML = `<small>Atendimento de ID ${res.atendimento.id.id} adicionado com sucesso.</small>`;
 
               this.emitAtendimento(res.atendimento);
 
               var newBtn = e.target.cloneNode(true);
-              newBtn.innerHTML = 'Novo atendimento';
+              newBtn.innerHTML = 'Novo  ';
               e.target.parentNode.replaceChild(newBtn, e.target);
               this.addNewRow(newBtn);
 
@@ -791,7 +1080,7 @@ class Table {
           .catch(async (err) => {
             if (typeof err.json === "function") {
               const jsonErr = await err.json();
-              errorWrapper.innerHTML = jsonErr.info + "<small class='text-warning'> Detalhes: " + jsonErr.error + "</small>";
+              errorWrapper.innerHTML = jsonErr.info ? jsonErr.info : "" + "<small class='text-warning'> Detalhes: " + jsonErr.error + "</small>";
               errorWrapper.className = "text-danger";
             } else {
               console.log("Fetch error", err);
@@ -805,6 +1094,154 @@ class Table {
   }
 
   /**
+   * Lida com a alteração no nome do usuário (área configurações)
+   */
+
+  defineUser(button) {
+    var button = this.checkSelector(button);
+
+    button.addEventListener("click", async () => {
+
+      if (this.usuarios.length == 0) this.usuarios = await this.fetchUsuarios();
+      var select = this.checkSelector("#defineUsuario");
+      if (select.childElementCount == 0) {
+        this.setUsuarioFromCookie();
+        var small = this.checkSelector(select.nextElementSibling);
+        this.usuarios.forEach((usuario) => {
+          var option = document.createElement("option");
+          if (this.usuario.id == usuario[0]) {
+            option.selected = "selected";
+          }
+          option.innerHTML = usuario[1];
+          option.setAttribute('data-usuarioid', usuario[0]);
+          select.appendChild(option);
+        });
+        select.addEventListener("change", (e) => {
+          // vou usar um client side cookie pq por enquanto o servidor é reiniciado diariamente.
+          const expires = new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000).toGMTString();
+          const planilhaUserId = select.options[ select.selectedIndex ].getAttribute("data-usuarioid");
+          const planilhaUserName = select.value;
+          document.cookie = `cookie_planilha_usuario=${planilhaUserName}_${planilhaUserId};expires=${expires};path=/;Secure`;
+          if (this.setUsuarioFromCookie()) {
+            small.innerHTML = "Usuário salvo com sucesso.";
+            small.className = "text-success";
+          } else {
+            small.innerHTML = "Ocorreu um erro ao salvar seu usuário. Verifique a aba Armazenamento no FireFox ou <a href='https://support.google.com/chrome/answer/95647?co=GENIE.Platform%3DDesktop&hl=pt-BR' rel='noopener'>limpe seus cookies no google chrome, e tente novamente.</a>";
+            small.className = "text-danger";
+          }
+        });
+      }
+
+      var selectPaginacao = this.checkSelector('#definePaginacao');
+      var smallPaginacao = this.checkSelector(selectPaginacao.nextElementSibling);
+      if(this.setPerPageFromCookie()) {
+
+        // https://stackoverflow.com/a/37098628/14427854
+        var evaluateOption = document.evaluate(`//option[contains(., '${this.perPage}')]`, document, null, XPathResult.ANY_TYPE, null );
+        var selectedOption = evaluateOption.iterateNext();
+        selectedOption.selected = "selected";
+
+      }
+      selectPaginacao.addEventListener("change", (e) => {
+
+        // vou usar um client side cookie pq por enquanto o servidor é reiniciado diariamente.
+        const expires = new Date(new Date().getTime() + 365 * 24 * 60 * 60 * 1000).toGMTString();
+        const paginacaoNum = selectPaginacao.value;
+        document.cookie = `cookie_planilha_perpage=${paginacaoNum};expires=${expires};path=/;Secure`;
+        if (this.setPerPageFromCookie()) {
+          smallPaginacao.innerHTML = "Preferência salva com sucesso.";
+          smallPaginacao.className = "text-success";
+        } else {
+          smallPaginacao.innerHTML = "Ocorreu um erro ao salvar sua configuração. Verifique a aba Armazenamento no FireFox ou <a href='https://support.google.com/chrome/answer/95647?co=GENIE.Platform%3DDesktop&hl=pt-BR' rel='noopener'>limpe seus cookies no google chrome, e tente novamente.</a>";
+          smallPaginacao.className = "text-danger";
+        }
+
+      })
+    });
+  }
+
+  /**
+   * Puxa o perPage do cookie
+   */
+
+  setPerPageFromCookie() {
+    const c = document.cookie.match(`(^|;)\\s*cookie_planilha_perpage\\s*=\\s*([^;]+)`);
+    if (c) {
+      const cookie = c.pop();
+      this.perPage = cookie;
+      return true;
+    }
+    // no cookie t_t
+    return false
+  }
+
+  /**
+   * Puxa o username e id do cookie
+   */
+
+  setUsuarioFromCookie() {
+    const c = document.cookie.match(`(^|;)\\s*cookie_planilha_usuario\\s*=\\s*([^;]+)`);
+    if (c) {
+      const cookie = c.pop();
+      const userData = cookie.split("_");
+      this.usuario.id = userData[1];
+      this.usuario.username = userData[0];
+      return true;
+    }
+    // no cookie t_t
+    return false
+  }
+
+  /**
+   * Adiciona funcionalidade do filtro por cliente
+   */
+
+  async enableClientFilter(inputDOM, buttonDOM, cleanBtnDOM) {
+    var input = this.checkSelector(inputDOM);
+    var button = this.checkSelector(buttonDOM);
+    var cleanBtn = this.checkSelector(cleanBtnDOM);
+    var errorSpan = this.checkSelector("#error-span");
+
+    if (this.clientesAtendimentos.length == 0) this.clientesAtendimentos = await this.fetchClientsAtendimentos();
+    this.autoComplete(input, this.clientesAtendimentos, 'clientfilter');
+    button.addEventListener('click', async (e) => {
+
+      const client_id = input.getAttribute("data-clientfilterid");
+
+      if (!client_id) {
+        errorSpan.innerHTML = "Selecione o cliente na listagem.";
+        errorSpan.className = "text-warning";
+        input.focus();
+      } else {
+        // trava o botão até que a busca seja concluída
+        button.disabled = true;
+        errorSpan.innerHTML = "Filtrando...";
+        errorSpan.className = "text-info";
+        this.currentClientId = client_id;
+        await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', client_id);
+        button.disabled = false;
+        cleanBtn.disabled = false;
+        cleanBtn.addEventListener("click", async () => {
+
+          this.currentCliendId = null;
+
+          await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc');
+
+          errorSpan.className = "text-success";
+          errorSpan.innerHTML = "Filtro removido.";
+
+          input.value = "";
+          cleanBtn.disabled = true;
+
+        });
+        errorSpan.innerHTML = "Filtro aplicado.";
+        errorSpan.className = "text-success";
+      }
+
+    }, this);
+  }
+
+  /**
    * Habilita o botão para adicionar novas linhas
    * Retorna o HTMLElement do botão
    */
@@ -814,8 +1251,8 @@ class Table {
     var button = this.checkSelector(btnDOM);
 
     button.addEventListener('click', async (e) => {
-      var tbody = document.querySelector('#todo-table > tbody');
-      var tr = tbody.insertRow(-1);
+      var tbody = document.querySelector('#todo-table > thead');
+      var tr = tbody.insertRow(1);
       // adiciona classe na nova linha para identificá-la nos outro métodos
       var oldAtendimento = document.querySelector('.new-atendimento');
       if (oldAtendimento) oldAtendimento.classList.remove('new-atendimento');
@@ -829,15 +1266,25 @@ class Table {
         var todayDate = date.toISOString().split('T')[0]
         switch (col.toLowerCase().trim()) {
           case "status":
-            input.disabled = "true";
-            input.name = "status";
-            input.type = "hidden";
+            input.disabled = "true"; input.name = "status"; input.type = "hidden";
             input.value = "1";
             break;
           case "num":
-            input.disabled = "true";
-            input.name = "id";
-            input.type = "hidden";
+
+            // hack chinelão!! vou usar esse espaço pra colocar o nome do atendente.
+            input.name = "user_id";
+            input.type = 'text';
+            input.placeholder = 'Atendente';
+            input.value = "";
+            input.id = "usuarios_dropdown";
+            input.required = "true";
+            input.classList.add("dropdown-toggle");
+            input.setAttribute("data-bs-toggle","dropdown");
+            input.setAttribute("aria-expanded", false);
+
+            //input.disabled = "true";
+            //input.name = "id";
+            //input.type = "hidden";
             break;
           case "# ticket":
             input.title = "Preencha caso já existir uma OS referente a este atendimento.";
@@ -884,29 +1331,65 @@ class Table {
             input.required = "true";
         }
         var td = document.createElement('td');
+        td.style.verticalAlign = "top";
         td.appendChild(input);
-        if (col.toLowerCase().trim() == 'cliente') {
+        const lowerCaseColName = col.toLowerCase().trim();
+
+        if (lowerCaseColName == 'cliente') {
+
           var dropdown = document.createElement('div');
           dropdown.className = 'dropdown-menu';
           dropdown.role = "menu";
           td.appendChild(dropdown);
-        } else if (col.toLowerCase().trim() == '# ticket') {
+
+        } else if (lowerCaseColName == '# ticket') {
+
           var optional = document.createElement('small');
           optional.className = 'text-info';
           optional.innerHTML = '**não obrigatório.';
           td.appendChild(optional);
+
+        } else if (lowerCaseColName == 'num') { 
+
+          var dropdown = document.createElement('div');
+          dropdown.className = 'dropdown-menu';
+          dropdown.role = "menu";
+          td.appendChild(dropdown);
+
+          var optional = document.createElement('small');
+          optional.className = 'text-info';
+          optional.innerHTML = '**nome do atendente.';
+          td.appendChild(optional);
+
         }
         tr.appendChild(td);
       });
-      var cliente_input = document.querySelector('#cliente_dropdown');
 
       // adiciona autoComplete no input "cliente": se eu já tiver utilizado a fetchClients(), pego o que tiver na memória
+      var cliente_input = document.querySelector('#cliente_dropdown');
       if (this.clients.length == 0) this.clients = await this.fetchClients();
+      this.autoComplete(cliente_input, this.clients, 'client');
 
+      // adiciona autoComplete no input "atendente": se eu já tiver utilizado a fetchUsuarios(), pego o que tiver na memória
+      var usuarios_input = document.querySelector('#usuarios_dropdown');
+      if (this.usuarios.length == 0) this.usuarios = await this.fetchUsuarios();
+      this.autoComplete(usuarios_input, this.usuarios, 'usuario');
 
-      this.autoComplete(cliente_input, this.clients);
+      // se o this.usuario.id não estiver carregado, tento puxar do cookie.
+      // se mesmo assim não estiver, desisto
+      if (this.usuario.id) {
+        usuarios_input.setAttribute('data-usuarioid', this.usuario.id);
+        usuarios_input.value = this.usuario.username;
+      } else {
+        if (this.setUsuarioFromCookie()) {
+          usuarios_input.setAttribute('data-usuarioid', this.usuario.id);
+          usuarios_input.value = this.usuario.username;
+        }
+      }
        
-      // põe o foco no input "cliente"
+      // põe o foco no input "cliente", mas antes clica no input "atendente"
+      // essa gambiarra vai me causar problemas mais pra frente.
+      usuarios_input.click();
       cliente_input.focus();
       cliente_input.click();
 
@@ -926,7 +1409,7 @@ class Table {
    * data = 
    */
 
-  autoComplete(campo, data) {
+  autoComplete(campo, data, identificador) {
 
     var input = this.checkSelector(campo);
 
@@ -944,7 +1427,7 @@ class Table {
 
       e.target.setAttribute('aria-expanded', false);
 
-      e.target.setAttribute('data-clientid', "");
+      e.target.setAttribute(`data-${identificador}id`, "");
     
       if (suggestions_list.classList.contains('show')) {
         e.target.classList.remove('show');
@@ -952,25 +1435,30 @@ class Table {
       }
       if (incoming == '') return;
 
-      var suggestions = data.filter(client => client[1].includes(incoming.toUpperCase()));
+      if (identificador == 'usuario') {
+        var suggestions = data.filter(usuario => usuario[1].includes(incoming));
+      } else {
+        var suggestions = data.filter(client => client[1].includes(incoming.toUpperCase()));
+      }
       if (suggestions.length > 0) {
 
         e.target.setAttribute('aria-expanded', true);
+
+        var divider = document.createElement('div');
+        divider.classname = 'dropdown-divider';
 
         suggestions.forEach((sug) => {
 
           var a = document.createElement('a');
           a.href = "javascript:void(0)";
           a.className = 'dropdown-item';
-          a.setAttribute('data-clientid', sug[0]);
+          a.setAttribute(`data-${identificador}id`, sug[0]);
           a.innerHTML = sug[1];
 
-          var divider = document.createElement('div');
-          divider.classname = 'dropdown-divider';
 
           a.addEventListener('click', (ev) => {
             e.target.value = ev.target.textContent;
-            e.target.setAttribute('data-clientid', ev.target.getAttribute('data-clientid'));
+            e.target.setAttribute(`data-${identificador}id`, ev.target.getAttribute(`data-${identificador}id`));
             e.target.click();
           });
 

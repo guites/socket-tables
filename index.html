@@ -7,8 +7,8 @@
     <title>To-do list | AstrusWeb</title>
     <link rel="stylesheet" href="bootstrap.min.css">
   </head>
-  <body style="padding-top:120px;">
-    <div class="navbar navbar-expand-lg fixed-top navbar-dark bg-dark">
+  <body>
+    <div class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
         <span class="navbar-brand">Astrusweb</span>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,15 +57,55 @@
                   rel="noopener" target="_blank">Certificados - Projetos</a>
               </div>
             </li>
-          </ul>
-          <ul class="navbar-nav ms-md-auto">
             <li class="nav-item">
               <a target="_blank" rel="noopener" class="nav-link" href="https://repositorio.astrusweb.com/">Repositório</a>
+            </li>
+          </ul>
+          <ul class="navbar-nav ms-md-auto">
+            <li class="nav-item d-flex align-items-center">
+              <button id="openConfiguracoesBtn" class="btn btn-warning btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#configuracoesDiv" aria-expanded="false" aria-controls="collapseExample">
+                Configurações
+              </button>
             </li>
           </ul>
         </div>
       </div>
     </div>
+
+    <div class="container">
+      <div class="collapse " id="configuracoesDiv">
+        <!-- col-md-3 offset-md-9 -->
+        <div class="card border-warning rounded-0 mb-3" >
+          <div class="card-header">Configurações</div>
+          <div class="card-body">
+            <h5 class="card-title">Usuário</h5>
+            <p class="card-text">Defina o nome de usuário utilizado no registro de suas atividades.</p>
+            <div class="form-group">
+              <label for="defineUsuario" class="form-label mt-0">Selecione seu nome na lista.</label>
+              <select class="form-select" id="defineUsuario" style="max-width:20rem;">
+              </select>
+              <small></small>
+            </div>
+            <h5 class="card-title mt-4">Paginação</h5>
+            <p class="card-text">Defina a quantidade de resultados por página.</p>
+            <div class="form-group">
+              <label for="definePaginacao" class="form-label mt-0">Selecione uma quantidade na lista.</label>
+              <select class="form-select" id="definePaginacao" style="max-width:20rem;">
+                <option>10</option>
+                <option>15</option>
+                <option>20</option>
+                <option>25</option>
+                <option>50</option>
+                <option>75</option>
+                <option>100</option>
+              </select>
+              <small class="text-warning">Valores maiores de 50 podem causar lentidão!</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class='container'>
       <div class="page-header">
         <div class="row">
@@ -125,9 +165,11 @@
       s.socket.on('atualiza status', (newStatus) => table.handleAtualizaStatus(newStatus));
 
       table.createTable();
-      table.loadRowsFromDatabase();
+      table.loadRowsFromDatabase(1, table.perPage, 'desc');
       var addRowBtn = table.addNewRow('#addRowBtn');
+      var searchInput = table.enableClientFilter('#searchInput', '#searchBtn', '#cleanBtn');
       table.generateConfirmModal("body", "#scripts");
+      table.defineUser("#openConfiguracoesBtn");
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
 
