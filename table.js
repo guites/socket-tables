@@ -18,7 +18,7 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://192.168.10.104:3000/';
+    this.apiURL = 'http://192.168.10.159:3000/';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -1210,7 +1210,7 @@ class Table {
 
       const client_id = input.getAttribute("data-clientfilterid");
 
-      if (!client_id) {
+      if (!client_id || client_id == 0) {
         errorSpan.innerHTML = "Selecione o cliente na listagem.";
         errorSpan.className = "text-warning";
         input.focus();
@@ -1226,6 +1226,7 @@ class Table {
         cleanBtn.addEventListener("click", async () => {
 
           this.currentCliendId = null;
+          input.setAttribute('data-clientfilterid', 0);
 
           await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc');
 
