@@ -23,10 +23,39 @@ Informações técnicas:
 
 *Pendentes*
 
+- Evitar que a pessoa possa enviar várias vezes o mesmo filtro, por ex, travar o filtro pelo cliente que já está sendo filtrado...
+- Quando o cliente faz muitas requisições sem retorno, ou quando a conexão cai na metade, etc, acaba dando o erro abaixo. Ocorre também se a pessoa fica clicando loucamente pra filtrar. 
+> Error: Too many connections
+>     at Object.createConnection (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/mysql2/promise.js:241:31)
+>     at query (/Users/guilhermegarcia/Node/sockettables/socket-tables/db/db.js:5:34)
+>     at Object.countAtendimentos (/Users/guilhermegarcia/Node/sockettables/socket-tables/db/db.js:52:23)
+>     at /Users/guilhermegarcia/Node/sockettables/socket-tables/index.js:140:24
+>     at Layer.handle [as handle_request] (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/layer.js:95:5)
+>     at next (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/route.js:137:13)
+>     at Route.dispatch (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/route.js:112:3)
+>     at Layer.handle [as handle_request] (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/layer.js:95:5)
+>     at /Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/index.js:281:22
+>     at Function.process_params (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/index.js:335:12) {
+>   code: 'ER\_CON\_COUNT\_ERROR',
+>   errno: 1040,
+>   sqlState: ''
+> }
+- Criar conexão com o banco uma única vez, ao invés de criar toda vez que é feito um query:
+```javascript
+const mysql = require('mysql2/promise');
+const config = require('./config');
+// const connection = await mysql.createConnection(config);
+// passar connection como parametro nas funções
+
+async function query(sql, params = null) {
+  const connection = await mysql.createConnection(config);
+  const [results, ] = await connection.execute(sql, params);
+  return results;
+}
+```
 - Aplica o filtro com o perPage em 10, num cliente que tem 30 entradas. Altera o perPage pra 100 e clica na terceira página => cai numa página com 100% filler rows.
 - Quando um usuário estiver utilizado o filtro, ele já carregou os clientes com atendimento no cache. Se for criado um atendimento pra um cliente diferente dos que existiam, ele não vai aparecer na listagem de clientes pra filtro até que o usuário atualize a página.
 - Alguns clientes quando são colocados no filtro, retornam a listagem com todas as linhas filler (possivelmente pq os atendimentos deles estão todos deletados)
-- Evitar que a pessoa possa enviar várias vezes o mesmo filtro, por ex, travar o filtro pelo cliente que já está sendo filtrado...
 - Quando entra no campo cliente sem clicar, dá aquele proble a do bootstrap que precisa de um .click()
 - Após uso do filtro e remoção, verificar se os hooks do socket voltam a funcionar normalmente.
 
