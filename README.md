@@ -47,6 +47,7 @@ Implementar
 - Esquema para "travar" o texto de um status passado. Por ex, quando um atendimento for fechado, o texto dele "aberto" não pode mais ser alterado. Se a pessoa quiser adicionar informações, tem que abrir novamente.
 - Permitir escrever nas observações apenas para atendimentos em aberto.
 - Campo "Conclusão": adicionar um comentário na hora de fechar o atendimento.
+- Filtro de status de atendimento.
 
 Já feito
 
