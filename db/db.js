@@ -4,6 +4,7 @@ const config = require('./config');
 async function query(sql, params = null) {
   const connection = await mysql.createConnection(config);
   const [results, ] = await connection.execute(sql, params);
+  await connection.end();
   return results;
 }
 
