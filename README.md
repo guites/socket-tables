@@ -24,22 +24,6 @@ Informações técnicas:
 *Pendentes*
 
 - Evitar que a pessoa possa enviar várias vezes o mesmo filtro, por ex, travar o filtro pelo cliente que já está sendo filtrado...
-- Quando o cliente faz muitas requisições sem retorno, ou quando a conexão cai na metade, etc, acaba dando o erro abaixo. Ocorre também se a pessoa fica clicando loucamente pra filtrar. 
-> Error: Too many connections
->     at Object.createConnection (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/mysql2/promise.js:241:31)
->     at query (/Users/guilhermegarcia/Node/sockettables/socket-tables/db/db.js:5:34)
->     at Object.countAtendimentos (/Users/guilhermegarcia/Node/sockettables/socket-tables/db/db.js:52:23)
->     at /Users/guilhermegarcia/Node/sockettables/socket-tables/index.js:140:24
->     at Layer.handle [as handle_request] (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/layer.js:95:5)
->     at next (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/route.js:137:13)
->     at Route.dispatch (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/route.js:112:3)
->     at Layer.handle [as handle_request] (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/layer.js:95:5)
->     at /Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/index.js:281:22
->     at Function.process_params (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/index.js:335:12) {
->   code: 'ER\_CON\_COUNT\_ERROR',
->   errno: 1040,
->   sqlState: ''
-> }
 - Criar conexão com o banco uma única vez, ao invés de criar toda vez que é feito um query:
 ```javascript
 const mysql = require('mysql2/promise');
@@ -61,9 +45,24 @@ async function query(sql, params = null) {
 
 *Resolvidos*
 
-- inserção de linhas quando usuário está com o form aberto: resolvido, colocando o form de inserção no cabeçalho.
+- inserção de linhas quando usuário está com o form aberto: **colocado form de inserção no cabeçalho.**
 ![ordem de inserção por outros usuários](readme/ordem_insercoes.png)
-
+- Quando o cliente faz muitas requisições sem retorno, ou quando a conexão cai na metade, etc, acaba dando o erro abaixo. Ocorre também se a pessoa fica clicando loucamente pra filtrar: **adicionei uma linha terminando a conexão após cada query** 
+> Error: Too many connections
+>     at Object.createConnection (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/mysql2/promise.js:241:31)
+>     at query (/Users/guilhermegarcia/Node/sockettables/socket-tables/db/db.js:5:34)
+>     at Object.countAtendimentos (/Users/guilhermegarcia/Node/sockettables/socket-tables/db/db.js:52:23)
+>     at /Users/guilhermegarcia/Node/sockettables/socket-tables/index.js:140:24
+>     at Layer.handle [as handle_request] (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/layer.js:95:5)
+>     at next (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/route.js:137:13)
+>     at Route.dispatch (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/route.js:112:3)
+>     at Layer.handle [as handle_request] (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/layer.js:95:5)
+>     at /Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/index.js:281:22
+>     at Function.process_params (/Users/guilhermegarcia/Node/sockettables/socket-tables/node_modules/express/lib/router/index.js:335:12) {
+>   code: 'ER\_CON\_COUNT\_ERROR',
+>   errno: 1040,
+>   sqlState: ''
+> }
 ## Alterações (To-do list da to-do list!)
 
 Implementar
