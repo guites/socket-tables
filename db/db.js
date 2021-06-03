@@ -38,6 +38,14 @@ async function getUserById(id) {
   return user;
 }
 
+async function getClientById(id) {
+  const cliente = await query(
+    `SELECT name, active FROM clientes WHERE sort_id = ?`,
+    [id]
+  );
+  return cliente;
+}
+
 async function getAllStatus() {
   const statuses = await query(
     `SELECT id, name FROM status`,
@@ -169,6 +177,7 @@ module.exports = {
   getAllUsers,
   getClientsAtendimentos,
   getUserById,
+  getClientById,
   getAllAtendimentos,
   getAtendimentos,
   getAtendimentosByClient,
