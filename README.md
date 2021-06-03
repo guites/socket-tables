@@ -23,6 +23,7 @@ Informações técnicas:
 
 *Pendentes*
 
+- Validação do user\_id na inserção de linha, acho que tá deixando passar pro query no banco ids que não existem. verificar e fazer igual tá com a verificação do client\_id.
 - Evitar que a pessoa possa enviar várias vezes o mesmo filtro, por ex, travar o filtro pelo cliente que já está sendo filtrado...
 - Criar conexão com o banco uma única vez, ao invés de criar toda vez que é feito um query:
 ```javascript
@@ -68,8 +69,6 @@ async function query(sql, params = null) {
 Implementar
 
 - utilizar esquema de popup.
-- Agora que a lista mostra os clientes inativos, avisar na hora de criar OS
-  o status do cliente;
 - Remover atendimento / editar atendimento inteiro ?
 - Adicionar tabela atendimentos\_status, com registro (data e hora) de quando cada atendimento foi aberto / reaberto / deletado.
 - Esquema para "travar" o texto de um status passado. Por ex, quando um atendimento for fechado, o texto dele "aberto" não pode mais ser alterado. Se a pessoa quiser adicionar informações, tem que abrir novamente.
@@ -77,6 +76,7 @@ Implementar
 - Permitir editar número de ticket apenas para atendimentos em aberto.
 - Campo "Conclusão": adicionar um comentário na hora de fechar o atendimento.
 - Filtro de status de atendimento.
+- Integração sortweb: registro de tickets via API.
 
 Já feito
 
@@ -86,6 +86,8 @@ Já feito
 - Paginação, mais novos por último, botão de novo atendimento em cima.
 - Adicionar campo com o nome do atendente (deixar pré-populado via cookie/sessão): optei por um cookie js até que seja definido a forma como vai ser autenticado nos envios pro sortweb. Depois, posso pensar em um sistema de login pra gerar uma chave no sort, algo do tipo.
 - Filtro por nome de cliente;
+- Agora que a lista mostra os clientes inativos, avisar na hora de criar OS
+  o status do cliente: **decidi bloquear a criação de atendimentos pra clientes inativos, visto que não pode ser gerado OS. Precisa ser registrado no nome da AstrusWeb, com o cliente na descrição.**
 
 #### DB MIGRATIONS
 
@@ -107,3 +109,8 @@ ALTER TABLE usuarios ADD UNIQUE (sort_id);
 ALTER TABLE atendimentos ADD FOREIGN KEY(user_id) REFERENCES usuarios(sort_id);
 INSERT INTO usuarios (sort_id, username, role) VALUES ("16","jantara","programador"), ("50","murilo","programador"), ("55","gustavo","programador"), ("69","mlucas","programador"), ("70","gabrielb","programador"), ("84","guilhermea","suporte"), ("104","felipe","programador"), ("105","andressa","suporte");
 ```
+
+##### Evolução do layout
+
+1. ~02/06/2021
+![circa 06/2021](readme/todo02062021.png)
