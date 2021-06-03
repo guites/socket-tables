@@ -15,6 +15,8 @@ class Table {
     this.currentClientId = null; 
     // número de linhas por página da planilha
     this.perPage = 25;
+    // status marcados no filtro
+    this.status_ids = [1, 2];
 
     this.usuarios = [];
     this.statuses = [];
@@ -213,85 +215,6 @@ class Table {
   }
 
   /**
-   * Barra com funcionalidades de add linha, filtro, etc
-   */
-  functionsBar() {
-    const wrapper = this.checkSelector('#functions-wrapper');
-
-    // adc botao para inserir linha -- início
-    
-    var tr = header.insertRow(1);
-
-    var td = document.createElement('td');
-    td.setAttribute("colspan", 2);
-
-
-    var headBtn = document.createElement('button');
-    headBtn.id = "addRowBtn";
-    headBtn.type = "button";
-    headBtn.innerText = "Novo  ";
-    this.bootstrapIt(headBtn, "btn btn-primary");
-
-    td.appendChild(headBtn);
-    tr.appendChild(td);
-
-    // adc botao para inserir linha -- fim
-    // adc campo de busca -- inicio
-   
-    var td = document.createElement('td');
-    td.setAttribute("colspan", 2);
-
-    var searchInput = document.createElement('input');
-    searchInput.type = "search";
-    searchInput.id = "searchInput";
-    searchInput.placeholder = "Filtrar por cliente";
-    searchInput.classList.add("dropdown-toggle");
-    searchInput.setAttribute("data-bs-toggle","dropdown");
-    searchInput.setAttribute("aria-expanded", false);
-    this.bootstrapIt(searchInput, "form-control me-sm-2");
-
-    var dropdown = document.createElement('div');
-    dropdown.className = 'dropdown-menu';
-    dropdown.role = "menu";
-
-    td.appendChild(searchInput);
-    td.appendChild(dropdown);
-    tr.appendChild(td);
-
-    var td = document.createElement('td');
-    td.setAttribute("colspan", 2);
-
-    var searchBtn = document.createElement('button');
-    searchBtn.type = "button";
-    searchBtn.innerHTML = "Filtrar";
-    searchBtn.id = "searchBtn";
-    this.bootstrapIt(searchBtn, "btn btn-primary");
-
-    var cleanBtn = document.createElement('button');
-    cleanBtn.type = "button";
-    cleanBtn.className = "btn btn-primary";
-    cleanBtn.innerHTML = "Limpar";
-    cleanBtn.disabled = true;
-    cleanBtn.id = "cleanBtn";
-
-    td.appendChild(searchBtn);
-    td.appendChild(cleanBtn);
-    tr.appendChild(td);
-
-   // adc campo de busca -- fim
-   
-   // adc espaço para mostrar avisos: inserção e busca -- início
-    
-    var tdErrorWrapper = document.createElement('td');
-    tdErrorWrapper.setAttribute("colspan", 4);
-    tdErrorWrapper.innerHTML = `<span role='alert' id='error-span' aria-hidden="true" class="text-warning"></span>`;
-    tr.appendChild(tdErrorWrapper);
-
-    // adc espaço para mostrar avisos: inserção e busca -- fim
-
-  }
-
-  /**
    * Cria a estrutura básica da tabela
    */
 
@@ -339,7 +262,7 @@ class Table {
    * extendi pra aceitar o id de cliente, uso na paginação
    */
 
-  async loadRowsFromDatabase(pg = 1, lmt = this.perPage, order = 'desc', client_id = null) {
+  async loadRowsFromDatabase(pg = 1, lmt = this.perPage, order = 'desc', client_id = null, status_ids = this.status_ids) {
 
     const allowed_orders = ['desc', 'asc'];
     const page = parseInt(pg);
@@ -352,7 +275,7 @@ class Table {
 
     // pega atendimentos cadastrados no banco
 
-    var existingRows = await fetch(this.apiURL + 'api/atendimentos?page=' + page + '&limit=' + limit + '&order=' + order + "&client_id=" + client_id)
+    var existingRows = await fetch(this.apiURL + 'api/atendimentos?page=' + page + '&limit=' + limit + '&order=' + order + "&client_id=" + client_id + "&status_ids=" + status_ids)
     .then((res) => res.json())
     .then((r) => {
       var atendimentos = [];
@@ -738,9 +661,11 @@ class Table {
     }, atendimento_id);
     return td;
   } 
+
   /**
    * Completa a ultima página com rows vazio pra não quebrar o scroll
    */
+
   fillerRows(perPage, rowslength, tbody) {
 
     for (var y = 0; y < (perPage - rowslength); y++) {
@@ -786,7 +711,9 @@ class Table {
   /**
    * adiciona linha final com paginação
    */
+
   setPagination(tbody, totalPages, currentPage, client_id) {
+
     var tr = tbody.insertRow(-1);
     var th = document.createElement('th');
     th.scope = "row";
@@ -1187,13 +1114,29 @@ class Table {
   }
 
   /**
+   * Adiciona funcionalidade do filtro por status
+   */
+
+  enableStatusFilter() {
+    var checkboxes = document.querySelectorAll('#filter-status-aberto, #filter-status-fechado, #filter-status-deletado');
+    checkboxes.forEach((checkbox) => {
+      checkbox.addEventListener("change", async (e) => {
+        var checked = document.querySelectorAll("#functions-wrapper input:checked");
+        var status_ids = [];
+        checked.forEach((c) => status_ids.push(c.name.split('-').pop()));
+        this.status_ids = status_ids;
+        await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', this.currentClientId);
+      });
+    });
+
+  }
+
+  /**
    * Adiciona funcionalidade do filtro por cliente
    */
 
   async enableClientFilter(inputDOM) {
     var input = this.checkSelector(inputDOM);
-   // var button = this.checkSelector(buttonDOM);
-   // var cleanBtn = this.checkSelector(cleanBtnDOM);
     var errorSpan = this.checkSelector("#filter-clientes-help");
 
     if (this.clientesAtendimentos.length == 0) this.clientesAtendimentos = await this.fetchClientsAtendimentos();
@@ -1235,64 +1178,10 @@ class Table {
 
         }
       }
-     // mutations.forEach(async function(mutation) {
-     //   if (mutation.type == "attributes") {
-     //     if (mutation.attributeName == 'data-clientfilterid') {
-     //       let client_id = mutation.target.getAttribute('data-clientfilterid');
-     //       if (client_id == null) client_id = '';
-     //       if (client_id != '') {
-
-     //         mutation.target.disabled = true;
-     //         errorSpan.innerHTML = "Filtrando...";
-     //         errorSpan.className = "text-info";
-     //         this.currentClientId = client_id;
-     //         await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', client_id);
-     //         mutation.target.disabled = false;
-
-     //       }
-     //     }
-     //   }
-     // }, this);
     }, this);
     observer.observe(input, {
       attributes: true //configure it to listen to attribute changes
     });
-   // button.addEventListener('click', async (e) => {
-
-   //   const client_id = input.getAttribute("data-clientfilterid");
-
-   //   if (!client_id || client_id == 0) {
-   //     errorSpan.innerHTML = "Selecione o cliente na listagem.";
-   //     errorSpan.className = "text-warning";
-   //     input.focus();
-   //   } else {
-   //     // trava o botão até que a busca seja concluída
-      //  button.disabled = true;
-      //  errorSpan.innerHTML = "Filtrando...";
-      //  errorSpan.className = "text-info";
-      //  this.currentClientId = client_id;
-      //  await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', client_id);
-      //  button.disabled = false;
-   //     cleanBtn.disabled = false;
-   //     cleanBtn.addEventListener("click", async () => {
-
-   //       this.currentClientId = null;
-   //       input.setAttribute('data-clientfilterid', 0);
-
-   //       await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc');
-
-   //       errorSpan.className = "text-success";
-   //       errorSpan.innerHTML = "Filtro removido.";
-
-   //       input.value = "";
-   //       cleanBtn.disabled = true;
-
-   //     });
-   //     errorSpan.innerHTML = "Filtro aplicado.";
-   //     errorSpan.className = "text-success";
-   //   }
-
-   // }, this);
   }
 
   /**
