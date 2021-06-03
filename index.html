@@ -123,6 +123,101 @@
           </div>
         </div>
       </div>
+      <section id="functions-wrapper">
+        <div class="row"> 
+          <form id="new-atendimento">
+            <fieldset>
+              <legend>Registro de novo atendimento</legend>
+              <fieldset class="row">
+                <div class="form-group col-lg-2">
+                  <label for="usuarios_dropdown" class="form-label">Atendente</label>
+                  <input autocomplete="off" required="required" data-bs-toggle="dropdown" aria-expanded=false class="form-control dropdown-toggle" type="text" placeholder="Atendente" value="" name="user_id" id="usuarios_dropdown">
+                  <div class="dropdown-menu" role="menu"></div>
+                </div>
+                <div class="form-group col-lg-2">
+                  <label for="cliente" class="form-label">Cliente</label>
+                  <input autocomplete="off" required="required" class="dropdown-toggle form-control" type="text" placeholder="Cliente" value="" name="client_id" id="cliente_dropdown" data-bs-toggle="dropdown" aria-expanded=false>
+                  <div class="dropdown-menu" role="menu"></div>
+                </div>
+                <div class="form-group col-lg-2">
+                  <label for="ticket" class="form-label"># Ticket<small id="ticket-help" class="form-text text-muted"> (opcional).</small></label>
+                  <input aria-describedby="ticket-help" class="form-control" type="text" placeholder="22513" value="" name="ticket" id="ticket">
+                  
+                </div>
+                <div class="form-group col-lg-2">
+                  <label for="data_atendimento" class="form-label">Data atendimento</label>
+                  <input required="required" class="form-control" type="date" placeholder="" value="" name="data_atendimento" id="data_atendimento">
+                </div>
+                <div class="form-group col-lg-2">
+                  <label for="data_retorno" class="form-label">Data de retorno</label>
+                  <input required="required" class="form-control" type="date" placeholder="" value="" name="data_retorno" id="data_retorno">
+                </div>
+                <div class="form-group col-lg-2">
+                  <label for="" class="form-label">Plataforma</label>
+                  <input required="required" class="form-control" type="text" placeholder="Plataforma" value="" name="plataforma" id="plataforma">
+                </div>
+              </fieldset>
+              <fieldset class="row mt-1">
+                <div class="form-group col-lg-12">
+                  <label for="obs" class="form-label">Descrição e observações</label>
+                  <textarea required="" class="form-control" rows="2" placeholder="Descrição e observações sobre o chamado." value="" name="obs" id="obs"></textarea>
+                </div>
+              </fieldset>
+              <fieldset class="row mt-2">
+                <div class="form-group col-lg-2">
+                  <input required="required" class="btn btn-primary" type="submit" value="Enviar" id="addRowBtn">
+                </div>
+                <div class="col-lg-8">
+                  <span id="error-span"></span>
+                </div>
+              </fieldset>
+            </fieldset>
+          </form>
+        </div>
+        <div class="row mt-4 col-lg-12">
+          <!-- <h3 class="">Filtrar atendimentos</h3> -->
+          <form class="">
+              <fieldset class="row">
+                <fieldset class="col-lg-4">
+                  <!-- <legend>Filtrar por cliente</legend> -->
+                  <div class="form-group">
+                    <label class="form-label" for="filter-clientes">Filtrar por cliente</label>
+                    <input autocomplete="off" class="form-control" aria-describedby="filter-clientes-help" type="text" placeholder="Selecione um cliente na lista" id="filter-clientes" data-bs-toggle="dropdown" aria-expanded=false name="filter-clientes">
+                    <div class="dropdown-menu" role="menu"></div>
+                    <small id="filter-clientes-help" class="form-text text-muted">Deixe em branco para remover o filtro.</small>
+                  </div>
+                </fieldset>
+                <fieldset class="col align-items-center col-lg-4">
+                  <!-- <legend>Filtrar por Status</legend> -->
+                  <div class="col-lg-12">
+                    <input class="form-check-input" type="checkbox" checked="" value="" id="filter-status-aberto" name="filter-status-aberto">
+                    <label class="form-check-label" for="filter-status-aberto">Abertos</label>
+                  </div>
+                  <div class="col-lg-12">
+                    <input class="form-check-input" type="checkbox" checked="" value="" name="filter-status-fechado" id="filter-status-fechado">
+                    <label class="form-check-label" for="filter-status-fechado">
+                      Fechados
+                    </label>
+                  </div>
+                  <div class="col-lg-12">
+                    <input class="form-check-input" type="checkbox" name="filter-status-deletado" id="filter-status-deletado">
+                    <label class="form-check-label" for="filter-status-deletado">
+                      Deletados
+                    </label>
+                  </div>
+                </fieldset>
+                <!-- <fieldset class="row mt-4">
+                  <div class="col-lg-4">
+                    <button type="button" class="btn btn-primary w-100">Filtrar</button>
+                  </div>
+                  <div class="col-lg-4">
+                    <button type="button" disabled="" class="btn btn-primary w-100">Limpar</button>
+                  </div>
+                </fieldset> -->
+              </fieldset>
+          </form>
+        </div>
+      </section>
       <section id="table-wrapper"></section>
       <div class='row'>
         <div class='col-lg-4'>
@@ -166,8 +261,10 @@
 
       table.createTable();
       table.loadRowsFromDatabase(1, table.perPage, 'desc');
-      var addRowBtn = table.addNewRow('#addRowBtn');
-      var searchInput = table.enableClientFilter('#searchInput', '#searchBtn', '#cleanBtn');
+      table.addFormFunctions();
+      table.insertAtendimento('#new-atendimento');
+      //var addRowBtn = table.addNewRow('#addRowBtn');
+      var searchInput = table.enableClientFilter('#filter-clientes');
       table.generateConfirmModal("body", "#scripts");
       table.defineUser("#openConfiguracoesBtn");
     </script>
