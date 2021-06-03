@@ -209,17 +209,16 @@ async function validateNewAtendimento(atd) {
     !body.data_atendimento ||
     !body.data_retorno ||
     !body.plataforma ||
-    !body.obs ||
-    !body.status
+    !body.obs
   ) throw new Error("campos client_id, user_id, status, data_atendimento, data_retorno, plataforma e obs são obrigatórios.");
 
-  // valida status_id
+  // valida status_id, o campo não pode vir preenchido.
   const received_status = parseInt(body.status, 10);
-  if (received_status === 1) {
-    body.status_name = "aberto";
+  if (received_status) {
+    throw new RangeError("O status inicial do atendimento é definido automaticamente.");
   } else {
-    throw new RangeError("O status inicial do atendimento deve ser aberto.");
-  }
+    body.status_name = "aberto";
+  }     
 
   // valida campos de data
   // caso os valores vierem como string, o mysql impede a inserção
@@ -244,6 +243,15 @@ async function validateNewAtendimento(atd) {
   }
   body.username = user[0].username;
 
+  // valida client_id
+  const client = await db.getClientById(body.client_id);
+  if (!client || client.length == 0) {
+    throw new Error("Id de cliente inválido.");
+  } else if (client[0].active == 0) {
+    throw new Error("Cliente inativo. Crie o atendimento em nome da Astrusweb, especificando o cliente nas observações.");
+  }
+  body.client_name = client[0].name;
+
   return body;
 }
 
@@ -267,7 +275,7 @@ app.post('/api/atendimentos', async (req, res) => {
         },
         status: body.status_name,
         cliente: {
-          name: req.body.name,
+          name: body.client_name,
           client_id: body.client_id,
         },
         ticket: req.body.ticket,
