@@ -18,7 +18,7 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://192.168.10.159:3000/';
+    this.apiURL = 'http://localhost:3000/';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -213,36 +213,11 @@ class Table {
   }
 
   /**
-   * Cria a estrutura básica da tabela
+   * Barra com funcionalidades de add linha, filtro, etc
    */
+  functionsBar() {
+    const wrapper = this.checkSelector('#functions-wrapper');
 
-  createTable() {
-
-    var table = document.createElement('table');
-    this.bootstrapIt(table, 'table table-hover');
-    table.setAttribute('id', 'todo-table');
-
-    this.setPerPageFromCookie();
-
-    var caption = document.createElement('caption');
-    caption.innerHTML = 'Atendimentos';
-    table.appendChild(caption);
-
-    var header = document.createElement('thead');
-
-    
-    // adc nome das colunas -- início
-    
-    var tr = header.insertRow(0);
-
-    this.columns.forEach((col) => {
-      var th = document.createElement('th');
-      th.scope = "col";
-      th.innerHTML = col;
-      tr.appendChild(th);
-    });
-
-    // adc nome das colunas -- fim
     // adc botao para inserir linha -- início
     
     var tr = header.insertRow(1);
@@ -313,6 +288,39 @@ class Table {
     tr.appendChild(tdErrorWrapper);
 
     // adc espaço para mostrar avisos: inserção e busca -- fim
+
+  }
+
+  /**
+   * Cria a estrutura básica da tabela
+   */
+
+  createTable() {
+
+    var table = document.createElement('table');
+    this.bootstrapIt(table, 'table table-hover');
+    table.setAttribute('id', 'todo-table');
+
+    this.setPerPageFromCookie();
+
+    var caption = document.createElement('caption');
+    caption.innerHTML = 'Atendimentos';
+    table.appendChild(caption);
+
+    var header = document.createElement('thead');
+    
+    // adc nome das colunas -- início
+    
+    var tr = header.insertRow(0);
+
+    this.columns.forEach((col) => {
+      var th = document.createElement('th');
+      th.scope = "col";
+      th.innerHTML = col;
+      tr.appendChild(th);
+    });
+
+    // adc nome das colunas -- fim
 
 
     table.appendChild(header);
@@ -788,7 +796,7 @@ class Table {
     var td = document.createElement('td');
     td.setAttribute("colspan",7);
     var ul = document.createElement('ul');
-    ul.className = "pagination pagination";
+    ul.className = "pagination pagination mb-0";
     td.appendChild(ul);
 
     for (var i = 1; i <= totalPages; i ++) { 
@@ -927,94 +935,90 @@ class Table {
    */
 
   validateInput(input) {
+
     var validation = {
-      valid: true,
-      message: ""
+      valid: true
     }
-    switch (input.name) {
-      case "ticket":
-        var val = input.value.trim();
-        input.value = val;
-        if (val != '') {
-          if (val.length < 6) {
-            // atendimento ref. a OS já existente
+
+    var input = this.checkSelector(input);
+
+    if (input.name == 'ticket') {
+      var val = input.value.trim();
+      input.value = val;
+      if (val != '') {
+        if (val.length < 6) {
+          // atendimento ref. a OS já existente
+          var rgx = /\d+/;
+          var match = val.match(rgx);
+          if (!(match !== null && match.length == 1 && match == val)) {
             validation.valid = false;
             validation.message = "Digite apenas números no campo <# Ticket>.";
-            var rgx = /\d+/;
-            var match = val.match(rgx);
-            if (match !== null) {
-              if (match.length == 1) {
-                if (match == val) {
-                  validation = {
-                    valid: true,
-                    message: ""
-                  }
-                }
-              }
-            }
           } else {
-            validation.valid = false;
-            validation.message = "O número do Ticket deve ter menos que 6 dígitos (valor máximo 99999).";
+            validation.val = val;
           }
-        }
-        break;
-      case "id":
-        if (input.value != '') {
+        } else {
           validation.valid = false;
-          validation.message = "O valor do id não pode ser preenchido manualmente.";
+          validation.message = "O número do Ticket deve ter menos que 6 dígitos (valor máximo 99999).";
         }
-        break;
-      case "status":
-        if (input.value != 1) {
-          validation.valid = false;
-          validation.message = "O valor do status não pode ser preenchido manualmente";
-        }
-        break;
-      case "client_id":
-        if (input.value.trim() == '') {
-          validation.valid = false;
-          validation.message = `O campo Cliente não pode estar vazio.`;
-        }
+      } else {
+        validation.val = '';
+      }
+    } else
+    if (input.name == 'client_id') {
+      if (input.value.trim() == '') {
+        validation.valid = false;
+        validation.message = `O campo Cliente não pode estar vazio.`;
+      } else {
         var client_id = input.getAttribute('data-clientid');
         if (!client_id) {
           validation.valid = false;
           validation.message = `O campo Cliente deve estar relacionado a um id válido.`;
+        } else {
+          validation.val = client_id;
         }
-        break;
-      case "user_id":
-        if (input.value.trim() == '') {
-          validation.valid = false;
-          validation.message = `O campo Atendente não pode estar vazio.`;
-        }
+      }
+    } else
+    if (input.name == 'user_id') {
+      if (input.value.trim() == '') {
+        validation.valid = false;
+        validation.message = `O campo Atendente não pode estar vazio.`;
+      } else {
         var usuario_id = input.getAttribute('data-usuarioid');
         if (!usuario_id) {
           validation.valid = false;
           validation.message = `O campo Atendente deve estar relacionado a um id válido.`;
-        }
-        break;
-      default:
-        if (input.value.trim() == '') {
-          validation.valid = false;
-          validation.message = `O campo ${input.name} não pode estar vazio.`;
+        } else {
+          validation.val = usuario_id;
         }
       }
+    } else {
+      if (input.value != ''){
+        validation.val = input.value;
+      } else {
+        validation.valid = false;
+        validation.message = `O campo ${input.name} é de preenchimento obrigatório!`;
+      }
+    }
+
     return validation;
   }
 
   /**
-   * Faz o envio dos campos para criação de nova entrada no banco
-   * chama, por sua vez, o método addNewRow
+   * Faz o envio do formulário de criação de atendimento
    */
 
-  insertAtendimento(btnDOM) {
+  insertAtendimento(formDOM) {
 
-    var button = this.checkSelector(btnDOM);
+    var form = this.checkSelector(formDOM);
     var errorWrapper = this.checkSelector('#error-span');
 
-    button.addEventListener('click', (e) => {
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+
       var atdPayload = {};
       var allValid = true;
-      var inputs = document.querySelectorAll('tr.new-atendimento input, tr.new-atendimento textarea');
+
+      var inputs = document.querySelectorAll('#usuarios_dropdown, #cliente_dropdown, #ticket, #data_atendimento, #data_retorno, #plataforma, #obs');
       for (var x = 0; x < inputs.length; x++) {
         var validation = this.validateInput(inputs[x]);
         if (!validation.valid) {
@@ -1028,15 +1032,7 @@ class Table {
             inputs[x].classList.remove('is-invalid');
           }
           inputs[x].classList.add('is-valid');
-          if (inputs[x].name == 'client_id') {
-            atdPayload[inputs[x].name] = inputs[x].getAttribute('data-clientid');
-            atdPayload['name'] = inputs[x].value;
-          } else if (inputs[x].name == 'user_id') {
-            atdPayload[inputs[x].name] = inputs[x].getAttribute('data-usuarioid');
-            atdPayload['name'] = inputs[x].value;
-          } else {
-            atdPayload[inputs[x].name] = inputs[x].value;
-          }
+          atdPayload[inputs[x].name] = validation.val;
         }
       }
 
@@ -1064,18 +1060,14 @@ class Table {
 
               this.appendExistingRows([res.atendimento]);
 
-              var formRow = document.querySelector('tr.new-atendimento');
-              formRow.remove();
-
               errorWrapper.className = 'text-info';
               errorWrapper.innerHTML = `<small>Atendimento de ID ${res.atendimento.id.id} adicionado com sucesso.</small>`;
 
               this.emitAtendimento(res.atendimento);
 
-              var newBtn = e.target.cloneNode(true);
-              newBtn.innerHTML = 'Novo  ';
-              e.target.parentNode.replaceChild(newBtn, e.target);
-              this.addNewRow(newBtn);
+              e.target.reset();
+
+              this.addFormFunctions(true);
 
             }
           })
@@ -1198,212 +1190,166 @@ class Table {
    * Adiciona funcionalidade do filtro por cliente
    */
 
-  async enableClientFilter(inputDOM, buttonDOM, cleanBtnDOM) {
+  async enableClientFilter(inputDOM) {
     var input = this.checkSelector(inputDOM);
-    var button = this.checkSelector(buttonDOM);
-    var cleanBtn = this.checkSelector(cleanBtnDOM);
-    var errorSpan = this.checkSelector("#error-span");
+   // var button = this.checkSelector(buttonDOM);
+   // var cleanBtn = this.checkSelector(cleanBtnDOM);
+    var errorSpan = this.checkSelector("#filter-clientes-help");
 
     if (this.clientesAtendimentos.length == 0) this.clientesAtendimentos = await this.fetchClientsAtendimentos();
     this.autoComplete(input, this.clientesAtendimentos, 'clientfilter');
-    button.addEventListener('click', async (e) => {
+    input.addEventListener('change', async(e) => {
+      if (e.target.value == '') {
 
-      const client_id = input.getAttribute("data-clientfilterid");
-
-      if (!client_id || client_id == 0) {
-        errorSpan.innerHTML = "Selecione o cliente na listagem.";
-        errorSpan.className = "text-warning";
-        input.focus();
-      } else {
-        // trava o botão até que a busca seja concluída
-        button.disabled = true;
-        errorSpan.innerHTML = "Filtrando...";
+        e.target.disabled = true;
+        errorSpan.innerHTML = "Removendo filtro...";
         errorSpan.className = "text-info";
-        this.currentClientId = client_id;
-        await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', client_id);
-        button.disabled = false;
-        cleanBtn.disabled = false;
-        cleanBtn.addEventListener("click", async () => {
-
-          this.currentClientId = null;
-          input.setAttribute('data-clientfilterid', 0);
-
-          await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc');
-
-          errorSpan.className = "text-success";
-          errorSpan.innerHTML = "Filtro removido.";
-
-          input.value = "";
-          cleanBtn.disabled = true;
-
-        });
-        errorSpan.innerHTML = "Filtro aplicado.";
+        this.currentClientId = 0;
+        await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc');
+        e.target.disabled = false;
+        errorSpan.innerHTML = "Filtro removido.";
         errorSpan.className = "text-success";
-      }
 
+      }
+    });
+    var observer = new MutationObserver(async (mutations) => {
+      for (var x = 0; x < mutations.length; x ++) {
+        if (mutations[x].type == "attributes") {
+
+          if (mutations[x].attributeName == 'data-clientfilterid') {
+            let client_id = mutations[x].target.getAttribute('data-clientfilterid');
+            if (client_id == null) client_id = '';
+            if (client_id != '') {
+
+              mutations[x].target.disabled = true;
+              errorSpan.innerHTML = "Filtrando...";
+              errorSpan.className = "text-info";
+              this.currentClientId = client_id;
+              await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', client_id);
+              mutations[x].target.disabled = false;
+              errorSpan.innerHTML = "Filtro aplicado.";
+              errorSpan.className = "text-success";
+
+            }
+          }
+
+        }
+      }
+     // mutations.forEach(async function(mutation) {
+     //   if (mutation.type == "attributes") {
+     //     if (mutation.attributeName == 'data-clientfilterid') {
+     //       let client_id = mutation.target.getAttribute('data-clientfilterid');
+     //       if (client_id == null) client_id = '';
+     //       if (client_id != '') {
+
+     //         mutation.target.disabled = true;
+     //         errorSpan.innerHTML = "Filtrando...";
+     //         errorSpan.className = "text-info";
+     //         this.currentClientId = client_id;
+     //         await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', client_id);
+     //         mutation.target.disabled = false;
+
+     //       }
+     //     }
+     //   }
+     // }, this);
     }, this);
+    observer.observe(input, {
+      attributes: true //configure it to listen to attribute changes
+    });
+   // button.addEventListener('click', async (e) => {
+
+   //   const client_id = input.getAttribute("data-clientfilterid");
+
+   //   if (!client_id || client_id == 0) {
+   //     errorSpan.innerHTML = "Selecione o cliente na listagem.";
+   //     errorSpan.className = "text-warning";
+   //     input.focus();
+   //   } else {
+   //     // trava o botão até que a busca seja concluída
+      //  button.disabled = true;
+      //  errorSpan.innerHTML = "Filtrando...";
+      //  errorSpan.className = "text-info";
+      //  this.currentClientId = client_id;
+      //  await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', client_id);
+      //  button.disabled = false;
+   //     cleanBtn.disabled = false;
+   //     cleanBtn.addEventListener("click", async () => {
+
+   //       this.currentClientId = null;
+   //       input.setAttribute('data-clientfilterid', 0);
+
+   //       await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc');
+
+   //       errorSpan.className = "text-success";
+   //       errorSpan.innerHTML = "Filtro removido.";
+
+   //       input.value = "";
+   //       cleanBtn.disabled = true;
+
+   //     });
+   //     errorSpan.innerHTML = "Filtro aplicado.";
+   //     errorSpan.className = "text-success";
+   //   }
+
+   // }, this);
   }
 
   /**
-   * Habilita o botão para adicionar novas linhas
-   * Retorna o HTMLElement do botão
+   * Habilita o funcionalidades do form de criar novo atendimento
+   * formReset = bool
    */
 
-  addNewRow(btnDOM) {
+  async addFormFunctions(formReset = false) {
 
-    var button = this.checkSelector(btnDOM);
+    var inputs = document.querySelectorAll('#usuarios_dropdown, #cliente_dropdown, #ticket, #data_atendimento, #data_retorno, #plataforma, #obs');
+    inputs[1].setAttribute('data-clientid', '');
+    inputs.forEach((i) => {
+      if (i.classList.contains('is-valid')) {
+        i.classList.remove('is-valid');
+      }
+    });
 
-    button.addEventListener('click', async (e) => {
-      var tbody = document.querySelector('#todo-table > thead');
-      var tr = tbody.insertRow(1);
-      // adiciona classe na nova linha para identificá-la nos outro métodos
-      var oldAtendimento = document.querySelector('.new-atendimento');
-      if (oldAtendimento) oldAtendimento.classList.remove('new-atendimento');
-      tr.classList.add('new-atendimento');
-      this.columns.forEach((col, idx) => {
-        var input = document.createElement('input');
-        input.type = 'text';
-        input.placeholder = col;
-        input.className = "form-control";
-        var date = new Date();
-        var todayDate = date.toISOString().split('T')[0]
-        switch (col.toLowerCase().trim()) {
-          case "status":
-            input.disabled = "true"; input.name = "status"; input.type = "hidden";
-            input.value = "1";
-            break;
-          case "num":
+    var date = new Date();
+    var todayDate = date.toISOString().split('T')[0]
 
-            // hack chinelão!! vou usar esse espaço pra colocar o nome do atendente.
-            input.name = "user_id";
-            input.type = 'text';
-            input.placeholder = 'Atendente';
-            input.value = "";
-            input.id = "usuarios_dropdown";
-            input.required = "true";
-            input.classList.add("dropdown-toggle");
-            input.setAttribute("data-bs-toggle","dropdown");
-            input.setAttribute("aria-expanded", false);
+    var data_atendimento = this.checkSelector("#data_atendimento");
+    data_atendimento.value = todayDate;
 
-            //input.disabled = "true";
-            //input.name = "id";
-            //input.type = "hidden";
-            break;
-          case "# ticket":
-            input.title = "Preencha caso já existir uma OS referente a este atendimento.";
-            input.name = "ticket";
-            input.type = "text";
-            input.className = "form-control border border-2 border-info";
-            break;
-          case "data - atendimento":
-            input.type = "date";
-            input.required = "true";
-            input.name = "data_atendimento";
-            input.value = todayDate;
-            break;
-          case "data - retorno":
-            input.name = "data_retorno";
-            input.type = "date";
-            input.required = "true";
-            input.min = todayDate;
-            break;
-          case "cliente":
-            input.id = "cliente_dropdown";
-            input.name = "client_id";
-            input.type = "text";
-            input.required = "true";
-            input.classList.add("dropdown-toggle");
-            input.setAttribute("data-bs-toggle","dropdown");
-            input.setAttribute("aria-expanded", false);
-            break;
-          case "plataforma":
-            input.name = "plataforma";
-            input.type = "text";
-            input.required = "true";
-            break;
-          case "observação":
-            var input = document.createElement('textarea');
-            input.rows = 1;
-            input.placeholder = col;
-            input.className = "form-control";
-            input.name = "obs";
-            input.required = "true";
-            break;
-          default:
-            input.type = "text";
-            input.required = "true";
-        }
-        var td = document.createElement('td');
-        td.style.verticalAlign = "top";
-        td.appendChild(input);
-        const lowerCaseColName = col.toLowerCase().trim();
+    var usuarios_input = this.checkSelector('#usuarios_dropdown');
+    // se o this.usuario.id não estiver carregado, tento puxar do cookie.
+    // se mesmo assim não estiver, desisto
+    if (this.usuario.id) {
+      usuarios_input.setAttribute('data-usuarioid', this.usuario.id);
+      usuarios_input.value = this.usuario.username;
+    } else {
+      if (this.setUsuarioFromCookie()) {
+        usuarios_input.setAttribute('data-usuarioid', this.usuario.id);
+        usuarios_input.value = this.usuario.username;
+      }
+    }
 
-        if (lowerCaseColName == 'cliente') {
-
-          var dropdown = document.createElement('div');
-          dropdown.className = 'dropdown-menu';
-          dropdown.role = "menu";
-          td.appendChild(dropdown);
-
-        } else if (lowerCaseColName == '# ticket') {
-
-          var optional = document.createElement('small');
-          optional.className = 'text-info';
-          optional.innerHTML = '**não obrigatório.';
-          td.appendChild(optional);
-
-        } else if (lowerCaseColName == 'num') { 
-
-          var dropdown = document.createElement('div');
-          dropdown.className = 'dropdown-menu';
-          dropdown.role = "menu";
-          td.appendChild(dropdown);
-
-          var optional = document.createElement('small');
-          optional.className = 'text-info';
-          optional.innerHTML = '**nome do atendente.';
-          td.appendChild(optional);
-
-        }
-        tr.appendChild(td);
-      });
+    if (!formReset) {
+      var data_retorno = this.checkSelector("#data_retorno");
+      data_retorno.min = todayDate;
 
       // adiciona autoComplete no input "cliente": se eu já tiver utilizado a fetchClients(), pego o que tiver na memória
-      var cliente_input = document.querySelector('#cliente_dropdown');
+      var cliente_input = this.checkSelector('#cliente_dropdown');
       if (this.clients.length == 0) this.clients = await this.fetchClients();
       this.autoComplete(cliente_input, this.clients, 'client');
 
       // adiciona autoComplete no input "atendente": se eu já tiver utilizado a fetchUsuarios(), pego o que tiver na memória
-      var usuarios_input = document.querySelector('#usuarios_dropdown');
       if (this.usuarios.length == 0) this.usuarios = await this.fetchUsuarios();
       this.autoComplete(usuarios_input, this.usuarios, 'usuario');
 
-      // se o this.usuario.id não estiver carregado, tento puxar do cookie.
-      // se mesmo assim não estiver, desisto
-      if (this.usuario.id) {
-        usuarios_input.setAttribute('data-usuarioid', this.usuario.id);
-        usuarios_input.value = this.usuario.username;
-      } else {
-        if (this.setUsuarioFromCookie()) {
-          usuarios_input.setAttribute('data-usuarioid', this.usuario.id);
-          usuarios_input.value = this.usuario.username;
-        }
-      }
-       
-      // põe o foco no input "cliente", mas antes clica no input "atendente"
-      // essa gambiarra vai me causar problemas mais pra frente.
+      var filter_input = this.checkSelector("#filter-clientes");
+
+      // clica nos elementos pra habilitar o uso das setas nos dropdowns...
+      filter_input.click();
       usuarios_input.click();
-      cliente_input.focus();
       cliente_input.click();
+    }
 
-      // altera funcionalidade do botão para "Salvar"
-      var newBtn = e.target.cloneNode(true);
-      newBtn.innerHTML = 'Salvar';
-      e.target.parentNode.replaceChild(newBtn, e.target);
-      this.insertAtendimento(newBtn);
-    });
-
-    return button;
   }
 
   /**
