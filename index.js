@@ -115,7 +115,8 @@ app.get('/api/status', async (req, res) => {
 });
 
 app.get('/api/atendimentos', async (req, res, next) => {
-  let { page, limit, order, client_id } = req.query;
+  let { page, limit, order, client_id, status_ids } = req.query;
+  status_ids = status_ids.split(",");
 
   if (isNaN(parseInt(page)) || isNaN(parseInt(limit))) {
     return res.status(400).send("page e limit devem ser valores numéricos.");
@@ -135,15 +136,15 @@ app.get('/api/atendimentos', async (req, res, next) => {
 
     client_id = parseInt(client_id);
 
-    if (!isNaN(client_id)) {
+    if (!isNaN(client_id) && client_id != 0) {
 
-      count = await db.countAtendimentos(client_id);
-      atendimentos = await db.getAtendimentosByClient( ((page - 1) * limit), limit, order, client_id );
+      count = await db.countAtendimentos(client_id, status_ids);
+      atendimentos = await db.getAtendimentosByClient( ((page - 1) * limit), limit, order, client_id, status_ids );
 
     } else {
 
-      count = await db.countAtendimentos(client_id);
-      atendimentos = await db.getAtendimentos( ((page - 1) * limit), limit, order );
+      count = await db.countAtendimentos(client_id, status_ids);
+      atendimentos = await db.getAtendimentos( ((page - 1) * limit), limit, order, status_ids );
 
     }
     res.json({atendimentos, count: count[0].count});
@@ -256,6 +257,7 @@ async function validateNewAtendimento(atd) {
 }
 
 app.post('/api/atendimentos', async (req, res) => {
+
   let body;
   try {
     body = await validateNewAtendimento(req.body);
@@ -300,6 +302,7 @@ app.post('/api/atendimentos', async (req, res) => {
       }
     }
   }
+
 });
 
 
