@@ -62,8 +62,13 @@
             </li>
           </ul>
           <ul class="navbar-nav ms-md-auto">
+            <li style="padding-right: 20px;" class="nav-item d-flex align-items-center">
+              <button id="openAuditLogsBtn" class="btn btn-info btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#audit-logs-list" aria-expanded="false" aria-controls="collapseExample">
+                Registros
+              </button>
+            </li>
             <li class="nav-item d-flex align-items-center">
-              <button id="openConfiguracoesBtn" class="btn btn-warning btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#configuracoesDiv" aria-expanded="false" aria-controls="collapseExample">
+              <button id="openConfiguracoesBtn" class="btn btn-muted btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#configuracoesDiv" aria-expanded="false" aria-controls="collapseExample">
                 Configurações
               </button>
             </li>
@@ -75,7 +80,7 @@
     <div class="container">
       <div class="collapse " id="configuracoesDiv">
         <!-- col-md-3 offset-md-9 -->
-        <div class="card border-warning rounded-0 mb-3" >
+        <div class="card border-muted rounded-0 mb-3" >
           <div class="card-header">Configurações</div>
           <div class="card-body">
             <h5 class="card-title">Usuário</h5>
@@ -104,6 +109,14 @@
           </div>
         </div>
       </div>
+
+
+      <div class="collapse" id="audit-logs-list">
+        <ul class="list-group">
+        </ul>
+      </div>
+
+
     </div>
 
     <div class='container'>
@@ -206,14 +219,6 @@
                     </label>
                   </div>
                 </fieldset>
-                <!-- <fieldset class="row mt-4">
-                  <div class="col-lg-4">
-                    <button type="button" class="btn btn-primary w-100">Filtrar</button>
-                  </div>
-                  <div class="col-lg-4">
-                    <button type="button" disabled="" class="btn btn-primary w-100">Limpar</button>
-                  </div>
-                </fieldset> -->
               </fieldset>
           </form>
         </div>
@@ -258,6 +263,7 @@
       s.socket.on('atualiza obs', (newObs) => table.atualizaObs(newObs));
       s.socket.on('add ticket', (addedTicket) => table.handleAddTicket(addedTicket));
       s.socket.on('atualiza status', (newStatus) => table.handleAtualizaStatus(newStatus));
+      s.socket.on('log', (log) => table.appendLog(log, document.querySelector('#audit-logs-list ul')));
 
       table.createTable();
       table.loadRowsFromDatabase(1, table.perPage, 'desc');
