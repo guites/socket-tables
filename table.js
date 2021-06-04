@@ -121,6 +121,20 @@ class Table {
     }
   }
 
+  appendLog(log, listDOM) {
+    var list = this.checkSelector(listDOM);
+    var li = document.createElement('li');
+    this.bootstrapIt(li, "list-group-item d-flex justify-content-between align-items-center");
+    var date = new Date(log.criado_em);
+    if (log.tipo == 'insert') {
+      li.innerHTML = `<p>${log.username} <span class="text-info">registrou</span> o atendimento #${log.codigo} para o cliente ${log.name} em ${date.toLocaleString()}.</p>`;
+    }
+    if (log.tipo == 'update') {
+      li.innerHTML = `<p>${log.username} <span class="text-info">atualizou</span> o atendimento #${log.codigo} para o cliente ${log.name} em ${date.toLocaleString()}.</p>`
+    }
+    list.appendChild(li);
+  }
+
   /**
    * Métodos para validar o construtor da classe
    */
@@ -332,7 +346,7 @@ class Table {
       headers: {
         'Content-Type':'application/json'
       },
-      body: JSON.stringify({column: "status", value: e.target.id})
+      body: JSON.stringify({column: "status", value: e.target.id, user_id: this.usuario.id})
     })
     .then((response) => {
       if (!response.ok) {
@@ -536,7 +550,7 @@ class Table {
               headers: {
                 'Content-Type':'application/json'
               },
-              body: JSON.stringify({column: "ticket", value: e.target.value})
+              body: JSON.stringify({column: "ticket", value: e.target.value, user_id: this.usuario.id })
             })
             .then((response) => {
               if (!response.ok) {
@@ -632,7 +646,7 @@ class Table {
           headers: {
             'Content-Type':'application/json'
           },
-          body: JSON.stringify({column: "obs", value: blur_now})
+          body: JSON.stringify({column: "obs", value: blur_now, user_id: this.usuario.id})
         })
         .then((response) => {
           if (!response.ok) {
