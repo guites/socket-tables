@@ -23,6 +23,7 @@ Informações técnicas:
 
 *Pendentes*
 
+- Na barra de busca, se a pessoa apertar ENTER antes de selecionar um cliente, ele atualiza a página. FIX: ao apertar enter, filtrar pelo primeiro resultado da lista.
 - Caso a pessoa estiver filtrando por atendimentos fechados, e outro usuário inserir uma linha, ela vai aparecer mesmo assim.
 - Validação do user\_id na inserção de linha, acho que tá deixando passar pro query no banco ids que não existem. verificar e fazer igual tá com a verificação do client\_id.
 - Evitar que a pessoa possa enviar várias vezes o mesmo filtro, por ex, travar o filtro pelo cliente que já está sendo filtrado...
