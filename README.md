@@ -23,6 +23,7 @@ Informações técnicas:
 
 *Pendentes*
 
+- Caso a pessoa estiver filtrando por atendimentos fechados, e outro usuário inserir uma linha, ela vai aparecer mesmo assim.
 - Validação do user\_id na inserção de linha, acho que tá deixando passar pro query no banco ids que não existem. verificar e fazer igual tá com a verificação do client\_id.
 - Evitar que a pessoa possa enviar várias vezes o mesmo filtro, por ex, travar o filtro pelo cliente que já está sendo filtrado...
 - Criar conexão com o banco uma única vez, ao invés de criar toda vez que é feito um query:
@@ -68,14 +69,16 @@ async function query(sql, params = null) {
 
 Implementar
 
+- puxar x ultimos registros quando a pessoa carregar a página
+- colocar um overflow na ul dos registros
+- opção de clicar no registro pra ver detalhes, ou criar página com todos os registros?
+- opção de clicar no atendimento pra ver histórico
 - utilizar esquema de popup.
 - Remover atendimento / editar atendimento inteiro ?
-- Adicionar tabela atendimentos\_status, com registro (data e hora) de quando cada atendimento foi aberto / reaberto / deletado.
 - Esquema para "travar" o texto de um status passado. Por ex, quando um atendimento for fechado, o texto dele "aberto" não pode mais ser alterado. Se a pessoa quiser adicionar informações, tem que abrir novamente.
 - Permitir escrever nas observações apenas para atendimentos em aberto.
 - Permitir editar número de ticket apenas para atendimentos em aberto.
 - Campo "Conclusão": adicionar um comentário na hora de fechar o atendimento.
-- Filtro de status de atendimento.
 - Integração sortweb: registro de tickets via API.
 
 Já feito
@@ -88,6 +91,8 @@ Já feito
 - Filtro por nome de cliente;
 - Agora que a lista mostra os clientes inativos, avisar na hora de criar OS
   o status do cliente: **decidi bloquear a criação de atendimentos pra clientes inativos, visto que não pode ser gerado OS. Precisa ser registrado no nome da AstrusWeb, com o cliente na descrição.**
+- Adicionar tabela atendimentos\_status, com registro (data e hora) de quando cada atendimento foi aberto / reaberto / deletado.
+- Filtro de status de atendimento.
 
 #### DB MIGRATIONS
 
@@ -108,6 +113,14 @@ ALTER TABLE atendimentos ADD COLUMN user_id INT(11) AFTER id;
 ALTER TABLE usuarios ADD UNIQUE (sort_id);
 ALTER TABLE atendimentos ADD FOREIGN KEY(user_id) REFERENCES usuarios(sort_id);
 INSERT INTO usuarios (sort_id, username, role) VALUES ("16","jantara","programador"), ("50","murilo","programador"), ("55","gustavo","programador"), ("69","mlucas","programador"), ("70","gabrielb","programador"), ("84","guilhermea","suporte"), ("104","felipe","programador"), ("105","andressa","suporte");
+```
+
+habilitar log de alterações:
+
+```sql
+CREATE TABLE auditlogs(id INT(11) PRIMARY KEY AUTO_INCREMENT, tipo VARCHAR(255) NOT NULL, tabela VARCHAR(255) NOT NULL, user_id INT NOT NULL, tabela_pk INT NOT NULL, FOREIGN KEY (user_id) REFERENCES usuarios(sort_id));
+CREATE TABLE auditlogdetalhes(id INT PRIMARY KEY AUTO_INCREMENT, log_id INT NOT NULL, nome_coluna VARCHAR(255) NOT NULL, valor_antigo TEXT, valor_novo TEXT NOT NULL, FOREIGN KEY (log_id) REFERENCES auditlogs(id));
+ALTER TABLE auditlogs ADD COLUMN criado_em DATETIME DEFAULT NOW();
 ```
 
 ##### Evolução do layout

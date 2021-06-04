@@ -190,28 +190,20 @@ async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC', status_ids = [1
   return atendimentos;
 }
 async function updateAtendimento(id, column, value) {
-  // acho que não consigo setar o nome da coluna de forma dinâmica
-  let column_name;
-  switch (column) {
-    case "plataforma":
-      column_name = "plataforma";
-      break;
-    case "ticket":
-      column_name = "ticket";
-      break;
-    case "status":
-      column_name = "status_id";
-      break;
-    default:
-      column_name = "obs";
-  }
   const atendimento = await query(
-    `UPDATE atendimentos SET ${column_name} = ? WHERE id = ?`,
+    `UPDATE atendimentos SET ${column} = ? WHERE id = ?`,
     [value, id]
   );
   return atendimento;
 }
 
+async function getAtendimentoById(id) {
+  const atendimento = await query (
+    `SELECT * FROM atendimentos WHERE id = ?`,
+    [id]
+  );
+  return atendimento;
+}
 
 async function insertAtendimento(atd) {
   if (atd.ticket == '' || !atd.ticket) {
@@ -223,12 +215,41 @@ async function insertAtendimento(atd) {
   );
   return newAtd;
 }
+
+async function auditLog(tipo, tabela, user_id, tabela_pk) {
+  const log = await query(
+    `INSERT INTO auditlogs (tipo, tabela, user_id, tabela_pk) VALUES (?, ?, ?, ?)`,
+    [tipo, tabela, user_id, tabela_pk]
+  );
+  return log;
+}
+
+async function auditLogDetalhe(log_id, nome_coluna, valor_antigo, valor_novo) {
+  const logDetalhe = await query(
+    `INSERT INTO auditlogdetalhes (log_id, nome_coluna, valor_antigo, valor_novo) VALUES (?, ?, ?, ?)`,
+    [log_id, nome_coluna, valor_antigo, valor_novo]
+  );
+  return logDetalhe;
+}
+
+async function getLog(id) {
+  const log = await query(
+    `SELECT al.id, al.tipo, al.tabela, u.username, c.name, al.criado_em, a.id as codigo FROM auditlogs al INNER JOIN atendimentos a ON al.tabela_pk = a.id INNER JOIN clientes c ON a.client_id = c.sort_id INNER JOIN usuarios u ON u.sort_id = al.user_id WHERE al.id = ?`,
+    [id]
+  );
+  return log;
+}
+
 module.exports = {
+  auditLog,
+  auditLogDetalhe,
+  getLog,
   getAllClients,
   getAllUsers,
   getClientsAtendimentos,
   getUserById,
   getClientById,
+  getAtendimentoById,
   getAllAtendimentos,
   getAtendimentos,
   getAtendimentosByClient,
