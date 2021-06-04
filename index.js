@@ -29,6 +29,7 @@ app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Methods","*");
   next();
 });
+
 app.use(bodyParser.json());
 app.use(clientErrorHandler);
 
@@ -115,13 +116,17 @@ app.get('/api/status', async (req, res) => {
 });
 
 app.get('/api/atendimentos', async (req, res, next) => {
-  let { page, limit, order, client_id, status_ids } = req.query;
-  status_ids = status_ids.split(",");
 
+  let { page, limit, order, client_id, status_ids } = req.query;
+
+  if (!order) return res.status(400).send("você deve definir uma order=ASC ou order=DESC.");
+  if (!status_ids) return res.status(400).send("Você deve definir o status dos pedidos.");
+
+  status_ids = status_ids.split(",");
+  if(status_ids.some(isNaN)) return res.status(400).send("Os códigos de status devem ser valores numéricos.");
   if (isNaN(parseInt(page)) || isNaN(parseInt(limit))) {
     return res.status(400).send("page e limit devem ser valores numéricos.");
   }
-  if (!order) return res.status(400).send("você deve definir uma order=ASC ou order=DESC.");
   if (page == 0) page = 1;
   const allowed_orders = ['ASC', 'DESC'];
   order = order.toUpperCase();
@@ -156,14 +161,51 @@ app.get('/api/atendimentos', async (req, res, next) => {
 });
 
 app.put('/api/atendimentos/:id', async(req, res) => {
+  console.log(req.body);
+  if (!req.body.user_id) {
+    return res.status(400).json({
+      success: false,
+      message: "Defina um usuário nas configurações."
+    });
+  }     
   try {
+    let column_name;
+    switch (req.body.column) {
+      case "plataforma":
+        column_name = "plataforma";
+        break;
+      case "ticket":
+        column_name = "ticket";
+        break;
+      case "status":
+        column_name = "status_id";
+        break;
+      default:
+        column_name = "obs";
+    }
+    const oldValues = await db.getAtendimentoById(req.params.id);
     const updated = await db.updateAtendimento(
       req.params.id,
-      req.body.column,
+      column_name,
       req.body.value
     );
-    console.log(updated);
     if (updated.affectedRows == 1 && updated.changedRows == 1) {
+
+      db.auditLog("update", "atendimentos", req.body.user_id, req.params.id)
+      .then((log) => {
+        db.auditLogDetalhe(log.insertId, column_name, oldValues[0][column_name], req.body.value)
+        return log;
+      })
+      .then((log) => db.getLog(log.insertId))
+      .then((getlog) => {
+
+        io.fetchSockets()
+        .then((sockets) => {
+          sockets[0].emit('log', getlog[0]);
+        });
+
+      });
+
       return res.json({
         success: true,
         message: "Salvo."
@@ -268,6 +310,18 @@ app.post('/api/atendimentos', async (req, res) => {
   }
   try {
     const newAtd = await db.insertAtendimento(req.body);
+
+    db.auditLog("insert", "atendimentos", body.user_id, newAtd.insertId)
+      .then((log) => db.getLog(log.insertId))
+      .then((getlog) => {
+
+        io.fetchSockets()
+        .then((sockets) => {
+          sockets[0].emit('log', getlog[0]);
+        });
+
+      });
+
     return res.json({
       success: true,
       atendimento: {
