@@ -23,6 +23,8 @@ Informações técnicas:
 
 *Pendentes*
 
+- em alguns casos a aba registros do usuário não está sendo populada, sem deixar nenhum erro no console.
+- ao marcar uma opção de filtro, por ex. aberto e deletado, e dar F5, o navegador mantém as checkbox marcadas mas não ativa o filtro.
 - Na barra de busca, se a pessoa apertar ENTER antes de selecionar um cliente, ele atualiza a página. FIX: ao apertar enter, filtrar pelo primeiro resultado da lista.
 - Caso a pessoa estiver filtrando por atendimentos fechados, e outro usuário inserir uma linha, ela vai aparecer mesmo assim.
 - Validação do user\_id na inserção de linha, acho que tá deixando passar pro query no banco ids que não existem. verificar e fazer igual tá com a verificação do client\_id.
@@ -81,6 +83,7 @@ Implementar
 - Permitir editar número de ticket apenas para atendimentos em aberto.
 - Campo "Conclusão": adicionar um comentário na hora de fechar o atendimento.
 - Integração sortweb: registro de tickets via API.
+- Tiver placeholder do ticket
 
 Já feito
 
