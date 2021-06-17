@@ -72,6 +72,7 @@ async function query(sql, params = null) {
 
 Implementar
 
+- Filtro por número de ticket (o ctr F com o número do ticket sempre vem o com 0 a mais..)
 - puxar x ultimos registros quando a pessoa carregar a página
 - colocar um overflow na ul dos registros
 - opção de clicar no registro pra ver detalhes, ou criar página com todos os registros?
