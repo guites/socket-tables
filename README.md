@@ -75,6 +75,8 @@ Implementar
 - Filtro por número de ticket (o ctr F com o número do ticket sempre vem o com 0 a mais..)
   - colocar remoção automática de filtro no tab/enter com campo vazio, mas apenas se tiver filtro por ticket ativo.
   - incorporar o id do cliente no filtro por ticket, ou limpar o filtro por cliente quando filtrar por ticket. Ativar as mensagens necessárias ("Filtro removido, etc")
+  - ao filtrar por ticket, deixar todos os checkbox de status marcados. fazer isso com o input.checked = false etc
+  - ao remover o filtro por ticket, voltar os checkbox na marcação que estavam antes
 - puxar x ultimos registros quando a pessoa carregar a página
 - colocar um overflow na ul dos registros
 - opção de clicar no registro pra ver detalhes, ou criar página com todos os registros?
