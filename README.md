@@ -25,11 +25,10 @@ Informações técnicas:
 
 - em alguns casos a aba registros do usuário não está sendo populada, sem deixar nenhum erro no console.
 - ao marcar uma opção de filtro, por ex. aberto e deletado, e dar F5, o navegador mantém as checkbox marcadas mas não ativa o filtro.
-- Na barra de busca, se a pessoa apertar ENTER antes de selecionar um cliente, ele atualiza a página. FIX: ao apertar enter, filtrar pelo primeiro resultado da lista.
 - Caso a pessoa estiver filtrando por atendimentos fechados, e outro usuário inserir uma linha, ela vai aparecer mesmo assim.
 - Validação do user\_id na inserção de linha, acho que tá deixando passar pro query no banco ids que não existem. verificar e fazer igual tá com a verificação do client\_id.
-- Evitar que a pessoa possa enviar várias vezes o mesmo filtro, por ex, travar o filtro pelo cliente que já está sendo filtrado...
-- Criar conexão com o banco uma única vez, ao invés de criar toda vez que é feito um query:
+- (em análise, pode causar transtorno caso a pessoa queira atualizar a lista...) Evitar que a pessoa possa enviar várias vezes o mesmo filtro, por ex, travar o filtro pelo cliente que já está sendo filtrado...
+- (em análise, foi adiciona função pra fechar interação com o banco [ver](https://github.com/guites/socket-tables/blob/main/db/db.js#L7)) Criar conexão com o banco uma única vez, ao invés de criar toda vez que é feito um query:
 ```javascript
 const mysql = require('mysql2/promise');
 const config = require('./config');
@@ -45,11 +44,12 @@ async function query(sql, params = null) {
 - Aplica o filtro com o perPage em 10, num cliente que tem 30 entradas. Altera o perPage pra 100 e clica na terceira página => cai numa página com 100% filler rows.
 - Quando um usuário estiver utilizado o filtro, ele já carregou os clientes com atendimento no cache. Se for criado um atendimento pra um cliente diferente dos que existiam, ele não vai aparecer na listagem de clientes pra filtro até que o usuário atualize a página.
 - Alguns clientes quando são colocados no filtro, retornam a listagem com todas as linhas filler (possivelmente pq os atendimentos deles estão todos deletados)
-- Quando entra no campo cliente sem clicar, dá aquele proble a do bootstrap que precisa de um .click()
+- Quando entra no campo cliente sem clicar, dá aquele problema do bootstrap que precisa de um .click()
 - Após uso do filtro e remoção, verificar se os hooks do socket voltam a funcionar normalmente.
 
 *Resolvidos*
 
+- Na barra de busca, se a pessoa apertar ENTER antes de selecionar um cliente, ele atualiza a página. FIX: ao apertar enter, filtrar pelo primeiro resultado da lista.
 - inserção de linhas quando usuário está com o form aberto: **colocado form de inserção no cabeçalho.**
 ![ordem de inserção por outros usuários](readme/ordem_insercoes.png)
 - Quando o cliente faz muitas requisições sem retorno, ou quando a conexão cai na metade, etc, acaba dando o erro abaixo. Ocorre também se a pessoa fica clicando loucamente pra filtrar: **adicionei uma linha terminando a conexão após cada query** 
@@ -73,6 +73,8 @@ async function query(sql, params = null) {
 Implementar
 
 - Filtro por número de ticket (o ctr F com o número do ticket sempre vem o com 0 a mais..)
+  - colocar remoção automática de filtro no tab/enter com campo vazio, mas apenas se tiver filtro por ticket ativo.
+  - incorporar o id do cliente no filtro por ticket, ou limpar o filtro por cliente quando filtrar por ticket. Ativar as mensagens necessárias ("Filtro removido, etc")
 - puxar x ultimos registros quando a pessoa carregar a página
 - colocar um overflow na ul dos registros
 - opção de clicar no registro pra ver detalhes, ou criar página com todos os registros?

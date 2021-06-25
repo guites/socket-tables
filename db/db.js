@@ -53,7 +53,7 @@ async function getAllStatus() {
   return statuses;
 }
 
-async function countAtendimentos(client_id = null, status_ids = [1, 2]) {
+async function countAtendimentos(client_id = null, status_ids = [1, 2], ticket_id = null) {
 
   let status_in = "";
 
@@ -76,6 +76,9 @@ async function countAtendimentos(client_id = null, status_ids = [1, 2]) {
   if (client_id) {
     sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in} AND client_id = ?`;
     arg_params.push(client_id);
+  } else if (ticket_id) {
+    sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in} AND ticket = ?`;
+    arg_params.push(ticket_id);
   }
 
   const count = await query (
@@ -148,12 +151,13 @@ async function getAtendimentosByClient(pg = 0, lmt = 25, order = 'DESC', client_
   return atendimentos;
 }
 
-async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC', status_ids = [1, 2]) {
+async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC', status_ids = [1, 2], ticket_id = null) {
 
   // sobre o .toString() ali, depois de eu ter verificado se era um número válido,
   // https://github.com/sidorares/node-mysql2/issues/1239#issuecomment-760314979
   //
   let status_in = "";
+
   switch(status_ids.length) {
     case 1:
       status_in = `s.id IN (?)`;
@@ -164,12 +168,12 @@ async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC', status_ids = [1
     default:
       status_in = `s.id IN (?, ?)`;
   }
+
   let args_array = [];
   status_ids.forEach((s) => args_array.push(s))
-  args_array.push(lmt.toString(), pg.toString());
   
-  const atendimentos = await query (
-   `SELECT atd.id as id,
+  let sql = `
+    SELECT atd.id as id,
     u.username as usuario,
     s.name as status,
     c.name,
@@ -181,10 +185,22 @@ async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC', status_ids = [1
     INNER JOIN clientes c ON c.sort_id = atd.client_id 
     INNER JOIN status s ON atd.status_id = s.id
     LEFT JOIN usuarios u ON u.sort_id = atd.user_id
-    WHERE ${status_in}
+    WHERE ${status_in}`;
+
+    if (ticket_id) {
+      sql += ` AND atd.ticket = ? `;
+      args_array.push(ticket_id.toString());
+    }
+
+    sql += `
     ORDER BY atd.id ${order}
     LIMIT ?
-    OFFSET ?`,
+    OFFSET ?`;
+
+  args_array.push(lmt.toString(), pg.toString());
+
+  const atendimentos = await query (
+    sql,
     args_array
   );
   return atendimentos;

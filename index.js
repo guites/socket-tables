@@ -71,6 +71,11 @@ app.get('/api', async (req, res) => {
           value: "new column value"
         }
       },
+      "/api/atendimentos/ticket/:id": {
+        "get": {
+          "id": "ticket id to get related atendimentos",
+        },
+      },
     }
   });
 });
@@ -229,6 +234,42 @@ app.put('/api/atendimentos/:id', async(req, res) => {
       message: "Erro ao interagir com banco de dados."
     });
   }
+});
+
+
+app.get('/api/atendimentos/tickets/:id', async (req, res, next) => {
+
+  const id = req.params.id;
+
+  if (!id) return res.status(400).send("Você deve definir o número do ticket.");
+
+  if (isNaN(parseInt(id))) {
+    return res.status(400).send("O número do ticket deve ser um valor numérico.");
+  }
+
+  const page = 1;
+  const limit = 25;
+
+  try {
+
+    let atendimentos;
+    let count;
+
+    count = await db.countAtendimentos(null, [1, 2, 3], id);
+    atendimentos = await db.getAtendimentos(
+      ((page - 1) * limit),
+      25,
+      'desc',
+      [1,2,3],
+      id
+    );
+
+    res.json({atendimentos, count: count[0].count});
+  } catch(err) {
+    console.log(err);
+    res.status(500).send("Erro ao acessar banco de dados.");
+  }
+
 });
 
 async function validateNewAtendimento(atd) {

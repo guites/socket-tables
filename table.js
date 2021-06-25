@@ -272,6 +272,46 @@ class Table {
   }
 
   /**
+   * Puxa atendimentos através de número de ticket.
+   */
+
+  async loadRowsByTicketID(ticketID) {
+
+    var existingRows = await fetch(this.apiURL + 'api/atendimentos/tickets/' + ticketID)
+    .then((res) => res.json())
+    .then((r) => {
+      var atendimentos = [];
+      r.atendimentos.forEach((atd) => {
+        atendimentos.push(
+          {
+            id: {
+              id: atd.id,
+              usuario: atd.usuario,
+            },
+            status: atd.status,
+            name: atd.name,
+            name: atd.name,
+            ticket: atd.ticket,
+            data_atendimento: atd.data_atendimento,
+            data_retorno: atd.data_retorno,
+            plataforma: atd.plataforma,
+            obs: atd.obs
+          });
+      });
+      return {atendimentos, count: r.count};
+    });
+
+    var totalPages = Math.ceil(existingRows.count / 25);
+    var currentPage = 1;
+
+    // monta os atendimentos na tabela
+
+    this.appendExistingRows(existingRows.atendimentos, this.perPage, totalPages, currentPage, null);
+
+  }
+
+
+  /**
    * Puxa atendimentos do banco de dados baseado nos parametros de paginação
    * extendi pra aceitar o id de cliente, uso na paginação
    */
@@ -332,7 +372,6 @@ class Table {
      * Fora de uso, após alterar status o usuário precisa
      * atualizar a pagina se quiser alterar novamente
      */
-
   }
 
   /**
@@ -883,8 +922,11 @@ class Table {
 
     var input = this.checkSelector(input);
 
-    if (input.name == 'ticket') {
+    if (input.name == 'ticket' || input.name == 'filter-tickets') {
       var val = input.value.trim();
+      if (val[0] == '0') {
+        val = val.substring(1,val.length);
+      }
       input.value = val;
       if (val != '') {
         if (val.length < 6) {
@@ -1142,7 +1184,34 @@ class Table {
         await this.loadRowsFromDatabase(this.pageNum, this.perPage, 'desc', this.currentClientId);
       });
     });
+  }
 
+  /**
+   * Adiciona funcionalidade do filtro por # de ticket
+   */
+
+  async enableTicketsFilter(inputDOM) {
+    var input = this.checkSelector(inputDOM);
+    var errorSpan = this.checkSelector("#filter-tickets-help");
+
+    // dispara o filtro ao apertar enter
+    input.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        this.ticketsFilterFunctionality(e.target);
+      }
+    });
+    input.addEventListener('focusout', (e) => {
+      this.ticketsFilterFunctionality(e.target);
+    });
+  }
+
+  async ticketsFilterFunctionality(input) {
+    if (input.value.trim() == '') return;
+    var small = input.nextElementSibling;
+    var validate = this.validateInput(input);
+    if (validate.valid) {
+      await this.loadRowsByTicketID(validate.val);
+    }
   }
 
   /**
@@ -1153,6 +1222,17 @@ class Table {
     var input = this.checkSelector(inputDOM);
     var errorSpan = this.checkSelector("#filter-clientes-help");
 
+    // seleciona o primeiro resultado ao apertar enter
+    var suggestions_list = this.checkSelector(input.nextElementSibling);
+    input.addEventListener('keyup', function(e) {
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        if (suggestions_list.children[0]) {
+          suggestions_list.children[0].click();
+        }
+      }
+    });
+
+    // habilita auto complete no filtro por clientes (atendimentos já abertos)
     if (this.clientesAtendimentos.length == 0) this.clientesAtendimentos = await this.fetchClientsAtendimentos();
     this.autoComplete(input, this.clientesAtendimentos, 'clientfilter');
     input.addEventListener('change', async(e) => {
@@ -1307,7 +1387,6 @@ class Table {
           a.setAttribute(`data-${identificador}id`, sug[0]);
           a.innerHTML = sug[1];
 
-
           a.addEventListener('click', (ev) => {
             e.target.value = ev.target.textContent;
             e.target.setAttribute(`data-${identificador}id`, ev.target.getAttribute(`data-${identificador}id`));
@@ -1318,11 +1397,23 @@ class Table {
           suggestions_list.appendChild(divider);
 
         });
+
         if (!suggestions_list.classList.contains('show')) {
           e.target.classList.add('show');
           suggestions_list.classList.add('show');
         }
       }
+    });
+  }
+
+  /**
+   * Previne submissão de forms
+   */
+
+  preventFormSubmit(formDOM) {
+    const form = this.checkSelector(formDOM);
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
     });
   }
 
