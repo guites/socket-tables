@@ -71,11 +71,6 @@ app.get('/api', async (req, res) => {
           value: "new column value"
         }
       },
-      "/api/atendimentos/ticket/:id": {
-        "get": {
-          "id": "ticket id to get related atendimentos",
-        },
-      },
     }
   });
 });
@@ -122,7 +117,16 @@ app.get('/api/status', async (req, res) => {
 
 app.get('/api/atendimentos', async (req, res, next) => {
 
-  let { page, limit, order, client_id, status_ids } = req.query;
+  let { page, limit, order, client_id, status_ids, ticket_id } = req.query;
+
+  if(ticket_id) {
+    if (isNaN(parseInt(ticket_id))) {
+      // só valida se estiver presente
+      return res.status(400).send("O número do ticket deve ser um valor numérico.");
+    }
+  } else {
+    ticket_id = null;
+  }
 
   if (!order) return res.status(400).send("você deve definir uma order=ASC ou order=DESC.");
   if (!status_ids) return res.status(400).send("Você deve definir o status dos pedidos.");
@@ -139,23 +143,18 @@ app.get('/api/atendimentos', async (req, res, next) => {
     return res.status(400).send("order deve ser ASC ou DESC");
   }
 
+  let atendimentos;
+  let count;
+
+  client_id = parseInt(client_id);
+
   try {
-
-    let atendimentos;
-    let count;
-
-    client_id = parseInt(client_id);
-
     if (!isNaN(client_id) && client_id != 0) {
-
-      count = await db.countAtendimentos(client_id, status_ids);
-      atendimentos = await db.getAtendimentosByClient( ((page - 1) * limit), limit, order, client_id, status_ids );
-
+      count = await db.countAtendimentos(client_id, status_ids, ticket_id);
+      atendimentos = await db.getAtendimentosByClient( ((page - 1) * limit), limit, order, client_id, status_ids, ticket_id );
     } else {
-
-      count = await db.countAtendimentos(client_id, status_ids);
-      atendimentos = await db.getAtendimentos( ((page - 1) * limit), limit, order, status_ids );
-
+      count = await db.countAtendimentos(client_id, status_ids, ticket_id);
+      atendimentos = await db.getAtendimentos( ((page - 1) * limit), limit, order, status_ids, ticket_id );
     }
     res.json({atendimentos, count: count[0].count});
   } catch(err) {
@@ -237,40 +236,6 @@ app.put('/api/atendimentos/:id', async(req, res) => {
 });
 
 
-app.get('/api/atendimentos/tickets/:id', async (req, res, next) => {
-
-  const id = req.params.id;
-
-  if (!id) return res.status(400).send("Você deve definir o número do ticket.");
-
-  if (isNaN(parseInt(id))) {
-    return res.status(400).send("O número do ticket deve ser um valor numérico.");
-  }
-
-  const page = 1;
-  const limit = 25;
-
-  try {
-
-    let atendimentos;
-    let count;
-
-    count = await db.countAtendimentos(null, [1, 2, 3], id);
-    atendimentos = await db.getAtendimentos(
-      ((page - 1) * limit),
-      25,
-      'desc',
-      [1,2,3],
-      id
-    );
-
-    res.json({atendimentos, count: count[0].count});
-  } catch(err) {
-    console.log(err);
-    res.status(500).send("Erro ao acessar banco de dados.");
-  }
-
-});
 
 async function validateNewAtendimento(atd) {
 

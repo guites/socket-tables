@@ -11,6 +11,9 @@ class Table {
     // listagem dos clientes que possuem atendimento, para o filtro
     this.clientesAtendimentos = [];
 
+    // guarda o id do ticket caso o filtro estiver ativo
+    this.ticket_id = '';
+
     // guarda o id do cliente caso o filtro estiver ativo
     this.currentClientId = null; 
     // número de linhas por página da planilha
@@ -272,51 +275,11 @@ class Table {
   }
 
   /**
-   * Puxa atendimentos através de número de ticket.
-   */
-
-  async loadRowsByTicketID(ticketID) {
-
-    var existingRows = await fetch(this.apiURL + 'api/atendimentos/tickets/' + ticketID)
-    .then((res) => res.json())
-    .then((r) => {
-      var atendimentos = [];
-      r.atendimentos.forEach((atd) => {
-        atendimentos.push(
-          {
-            id: {
-              id: atd.id,
-              usuario: atd.usuario,
-            },
-            status: atd.status,
-            name: atd.name,
-            name: atd.name,
-            ticket: atd.ticket,
-            data_atendimento: atd.data_atendimento,
-            data_retorno: atd.data_retorno,
-            plataforma: atd.plataforma,
-            obs: atd.obs
-          });
-      });
-      return {atendimentos, count: r.count};
-    });
-
-    var totalPages = Math.ceil(existingRows.count / 25);
-    var currentPage = 1;
-
-    // monta os atendimentos na tabela
-
-    this.appendExistingRows(existingRows.atendimentos, this.perPage, totalPages, currentPage, null);
-
-  }
-
-
-  /**
    * Puxa atendimentos do banco de dados baseado nos parametros de paginação
    * extendi pra aceitar o id de cliente, uso na paginação
    */
 
-  async loadRowsFromDatabase(pg = 1, lmt = this.perPage, order = 'desc', client_id = null, status_ids = this.status_ids) {
+  async loadRowsFromDatabase(pg = 1, lmt = this.perPage, order = 'desc', client_id = null, status_ids = this.status_ids, ticket_id = this.ticket_id) {
 
     const allowed_orders = ['desc', 'asc'];
     const page = parseInt(pg);
@@ -329,7 +292,16 @@ class Table {
 
     // pega atendimentos cadastrados no banco
 
-    var existingRows = await fetch(this.apiURL + 'api/atendimentos?page=' + page + '&limit=' + limit + '&order=' + order + "&client_id=" + client_id + "&status_ids=" + status_ids)
+    var queryString = 'api/atendimentos?page=' + page;
+    queryString += '&limit=' + limit;
+    queryString += '&order=' + order;
+    queryString += '&client_id=' + client_id;
+    queryString += '&status_ids=' + status_ids;
+    queryString += '&ticket_id=' + ticket_id;
+    var existingRows = await fetch(
+      this.apiURL + queryString
+      //this.apiURL + 'api/atendimentos?page=' + page + '&limit=' + limit + '&order=' + order + "&client_id=" + client_id + "&status_ids=" + status_ids
+    )
     .then((res) => res.json())
     .then((r) => {
       var atendimentos = [];
@@ -1206,12 +1178,33 @@ class Table {
   }
 
   async ticketsFilterFunctionality(input) {
-    if (input.value.trim() == '') return;
+    var ticket_id = input.value.trim();
     var small = input.nextElementSibling;
-    var validate = this.validateInput(input);
-    if (validate.valid) {
-      await this.loadRowsByTicketID(validate.val);
+    var currentPage = this.currentPage;
+
+    // caso a pessoa manter o mesmo valor, não faz nada
+    if(this.ticket_id == ticket_id) return;
+
+    //se não tiver valor no input, remove o filtro existente
+    if (ticket_id == '') {
+      this.ticket_id = '';
+      currentPage = 1;
     }
+
+    var validate = this.validateInput(input);
+
+    if (validate.valid) {
+      currentPage = 1;
+      this.ticket_id = ticket_id;
+      small.innerText = 'Filtro aplicado.';
+      small.className = 'form-text text-success';
+    } else {
+      small.innerText = validate.message;
+      small.className = 'form-text text-warning';
+    }
+
+    // caso for uma consulta válida ou remoção de filtro, preciso voltar pra pg 1, se não, mantenho na mesma página
+    await this.loadRowsFromDatabase(currentPage, this.perPage, 'desc', this.currentClientId, this.status_ids, this.ticket_id);
   }
 
   /**

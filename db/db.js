@@ -71,13 +71,15 @@ async function countAtendimentos(client_id = null, status_ids = [1, 2], ticket_i
   let arg_params = [];
   status_ids.forEach((s) => arg_params.push(s));
 
-  let sql;
-  if (!client_id) sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in}`;
+  let sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in}`;
   if (client_id) {
-    sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in} AND client_id = ?`;
+    sql += ' AND client_id = ?';
+    //sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in} AND client_id = ?`;
     arg_params.push(client_id);
-  } else if (ticket_id) {
-    sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in} AND ticket = ?`;
+  }
+  if (ticket_id) {
+    sql += ' AND ticket = ?';
+    //sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in} AND ticket = ?`;
     arg_params.push(ticket_id);
   }
 
@@ -109,7 +111,7 @@ async function getAllAtendimentos() {
   return atendimentos;
 }
 
-async function getAtendimentosByClient(pg = 0, lmt = 25, order = 'DESC', client_id, status_ids = [1,2]) {
+async function getAtendimentosByClient(pg = 0, lmt = 25, order = 'DESC', client_id, status_ids = [1,2], ticket_id) {
 
   // sobre o .toString() ali, depois de eu ter verificado se era um número válido,
   // https://github.com/sidorares/node-mysql2/issues/1239#issuecomment-760314979
@@ -126,28 +128,31 @@ async function getAtendimentosByClient(pg = 0, lmt = 25, order = 'DESC', client_
   }
   let args_array = [];
   status_ids.forEach((s) => args_array.push(s))
-  args_array.push(client_id, lmt.toString(), pg.toString());
   
-  const atendimentos = await query (
- `SELECT atd.id as id,
-  u.username as usuario,
-  s.name as status,
-  c.name,
-  atd.ticket,
-  DATE_FORMAT(atd.data_atendimento,'%d/%m/%y') as data_atendimento,
-  DATE_FORMAT(atd.data_retorno,'%d/%m/%y') as data_retorno,
-  atd.plataforma,
-  atd.obs FROM atendimentos atd
-  INNER JOIN clientes c ON c.sort_id = atd.client_id 
-  INNER JOIN status s ON atd.status_id = s.id
-  LEFT JOIN usuarios u ON u.sort_id = atd.user_id
-  ${status_in}
-  AND c.sort_id = ?
-  ORDER BY atd.id ${order}
-  LIMIT ?
-  OFFSET ?`,
-  args_array
-  );
+  let sql =`SELECT atd.id as id,
+   u.username as usuario,
+   s.name as status,
+   c.name,
+   atd.ticket,
+   DATE_FORMAT(atd.data_atendimento,'%d/%m/%y') as data_atendimento,
+   DATE_FORMAT(atd.data_retorno,'%d/%m/%y') as data_retorno,
+   atd.plataforma,
+   atd.obs FROM atendimentos atd
+   INNER JOIN clientes c ON c.sort_id = atd.client_id 
+   INNER JOIN status s ON atd.status_id = s.id
+   LEFT JOIN usuarios u ON u.sort_id = atd.user_id
+   ${status_in}`;
+  if (ticket_id) {
+    sql += ` AND atd.ticket = ? `;
+    args_array.push(ticket_id.toString());
+  }
+  sql += ` AND c.sort_id = ?
+   ORDER BY atd.id ${order}
+   LIMIT ?
+   OFFSET ?`;
+  args_array.push(client_id, lmt.toString(), pg.toString());
+
+  const atendimentos = await query (sql, args_array);
   return atendimentos;
 }
 
@@ -155,7 +160,7 @@ async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC', status_ids = [1
 
   // sobre o .toString() ali, depois de eu ter verificado se era um número válido,
   // https://github.com/sidorares/node-mysql2/issues/1239#issuecomment-760314979
-  //
+  
   let status_in = "";
 
   switch(status_ids.length) {

@@ -6,6 +6,11 @@
     <meta encoding="UTF-8">
     <title>To-do list | AstrusWeb</title>
     <link rel="stylesheet" href="bootstrap.min.css">
+    <style>
+      td textarea {
+        resize:both;
+      }
+    </style>
   </head>
   <body>
     <div class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -154,7 +159,7 @@
                 </div>
                 <div class="form-group col-lg-2">
                   <label for="ticket" class="form-label"># Ticket<small id="ticket-help" class="form-text text-muted"> (opcional).</small></label>
-                  <input aria-describedby="ticket-help" class="form-control" type="text" placeholder="22513" value="" name="ticket" id="ticket">
+                  <input aria-describedby="ticket-help" class="form-control" type="text" placeholder="# ticket" value="" name="ticket" id="ticket">
                   
                 </div>
                 <div class="form-group col-lg-2">

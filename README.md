@@ -72,11 +72,6 @@ async function query(sql, params = null) {
 
 Implementar
 
-- Filtro por número de ticket (o ctr F com o número do ticket sempre vem o com 0 a mais..)
-  - colocar remoção automática de filtro no tab/enter com campo vazio, mas apenas se tiver filtro por ticket ativo.
-  - incorporar o id do cliente no filtro por ticket, ou limpar o filtro por cliente quando filtrar por ticket. Ativar as mensagens necessárias ("Filtro removido, etc")
-  - ao filtrar por ticket, deixar todos os checkbox de status marcados. fazer isso com o input.checked = false etc
-  - ao remover o filtro por ticket, voltar os checkbox na marcação que estavam antes
 - puxar x ultimos registros quando a pessoa carregar a página
 - colocar um overflow na ul dos registros
 - opção de clicar no registro pra ver detalhes, ou criar página com todos os registros?
@@ -88,7 +83,6 @@ Implementar
 - Permitir editar número de ticket apenas para atendimentos em aberto.
 - Campo "Conclusão": adicionar um comentário na hora de fechar o atendimento.
 - Integração sortweb: registro de tickets via API.
-- Tiver placeholder do ticket
 
 Já feito
 
@@ -102,6 +96,13 @@ Já feito
   o status do cliente: **decidi bloquear a criação de atendimentos pra clientes inativos, visto que não pode ser gerado OS. Precisa ser registrado no nome da AstrusWeb, com o cliente na descrição.**
 - Adicionar tabela atendimentos\_status, com registro (data e hora) de quando cada atendimento foi aberto / reaberto / deletado.
 - Filtro de status de atendimento.
+- Filtro por número de ticket (o ctr F com o número do ticket sempre vem o com 0 a mais..)
+  - colocar remoção automática de filtro no tab/enter com campo vazio, mas apenas se tiver filtro por ticket ativo.
+  - incorporar o id do cliente no filtro por ticket, ou limpar o filtro por cliente quando filtrar por ticket. Ativar as mensagens necessárias ("Filtro removido, etc")
+  - ao filtrar por ticket, deixar todos os checkbox de status marcados. fazer isso com o input.checked = false etc: **não foi feito, incorporei o id do ticket e o status na mesma consulta**
+  - ao remover o filtro por ticket, voltar os checkbox na marcação que estavam antes: **não foi feito, incorporei o id do ticket e o status na mesma consulta**
+- Tirar placeholder do ticket
+- Resize:both nas textareas da planilha \(foda-se, é melhor pra ler\)
 
 #### DB MIGRATIONS
 
