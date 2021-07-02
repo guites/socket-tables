@@ -14,6 +14,9 @@ class Table {
     // guarda o id do ticket caso o filtro estiver ativo
     this.ticket_id = '';
 
+    // guarda a descrição caso o filtro estiver ativo
+    this.description = '';
+
     // guarda o id do cliente caso o filtro estiver ativo
     this.currentClientId = null; 
     // número de linhas por página da planilha
@@ -23,7 +26,7 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://192.168.10.104:3000/';
+    this.apiURL = 'http://localhost:3000/';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -279,7 +282,11 @@ class Table {
    * extendi pra aceitar o id de cliente, uso na paginação
    */
 
-  async loadRowsFromDatabase(pg = 1, lmt = this.perPage, order = 'desc', client_id = null, status_ids = this.status_ids, ticket_id = this.ticket_id) {
+  async loadRowsFromDatabase(
+    pg = 1, lmt = this.perPage, order = 'desc',
+    client_id = null, status_ids = this.status_ids,
+    ticket_id = this.ticket_id, description = this.description)
+  {
 
     const allowed_orders = ['desc', 'asc'];
     const page = parseInt(pg);
@@ -298,9 +305,9 @@ class Table {
     queryString += '&client_id=' + client_id;
     queryString += '&status_ids=' + status_ids;
     queryString += '&ticket_id=' + ticket_id;
+    queryString += '&description=' + description;
     var existingRows = await fetch(
       this.apiURL + queryString
-      //this.apiURL + 'api/atendimentos?page=' + page + '&limit=' + limit + '&order=' + order + "&client_id=" + client_id + "&status_ids=" + status_ids
     )
     .then((res) => res.json())
     .then((r) => {
@@ -321,7 +328,6 @@ class Table {
             plataforma: atd.plataforma,
             obs: atd.obs
           });
-        //atendimentos.push(atd);
       });
       return {atendimentos, count: r.count};
     });
@@ -1179,6 +1185,44 @@ class Table {
 
   async ticketsFilterFunctionality(input) {
     var ticket_id = input.value.trim();
+    var small = input.nextElementSibling;
+    var currentPage = this.currentPage;
+
+    // caso a pessoa manter o mesmo valor, não faz nada
+    if(this.ticket_id == ticket_id) return;
+
+    //se não tiver valor no input, remove o filtro existente
+    if (ticket_id == '') {
+      this.ticket_id = '';
+      currentPage = 1;
+    }
+
+    var validate = this.validateInput(input);
+
+    if (validate.valid) {
+      currentPage = 1;
+      this.ticket_id = ticket_id;
+      if (this.ticket_id == '') {
+        small.innerText = 'Filtro removido';
+      } else {
+        small.innerText = 'Filtro aplicado.';
+      }
+      small.className = 'form-text text-success';
+    } else {
+      small.innerText = validate.message;
+      small.className = 'form-text text-warning';
+    }
+
+    // caso for uma consulta válida ou remoção de filtro, preciso voltar pra pg 1, se não, mantenho na mesma página
+    await this.loadRowsFromDatabase(currentPage, this.perPage, 'desc', this.currentClientId, this.status_ids, this.ticket_id);
+  }
+
+  /**
+   * Filtro por descrição
+   */
+
+  async descriptionFilterFunctionality(input) {
+    var description = input.value.trim();
     var small = input.nextElementSibling;
     var currentPage = this.currentPage;
 

@@ -205,7 +205,7 @@
                     <small id="filter-clientes-help" class="form-text text-muted">Deixe em branco para remover o filtro.</small>
                   </div>
                 </fieldset>
-                <fieldset class="col align-items-center col-lg-4">
+                <fieldset class="col align-items-center col-lg-2">
                   <!-- <legend>Filtrar por Status</legend> -->
                   <div class="col-lg-12">
                     <input class="form-check-input" type="checkbox" checked="" value="" id="filter-status-aberto" name="filter-status-1">
@@ -232,6 +232,16 @@
                     <label class="form-label" for="filter-tickets">Filtrar por ticket</label>
                     <input autocomplete="off" class="form-control" aria-describedby="filter-tickets-help" type="text" placeholder="# do ticket" id="filter-tickets" name="filter-tickets">
                     <small id="filter-tickets-help" class="form-text text-muted">Deixe em branco para remover.</small>
+                  </div>
+                </fieldset>
+                <fieldset class="col col-lg-3">
+                  <!-- <legend>Filtrar por ticket</legend> -->
+                  <div class="form-group">
+                    <label class="form-label" for="filter-description">Filtrar por Descrição</label>
+                    <textarea style="min-height:36px;resize:both;height:36px;"
+                      class="form-control" rows="1" placeholder="Escreva um trecho da descrição"
+                      value="" name="filter-description" id="filter-description"></textarea>
+                    <small id="filter-description-help" class="form-text text-muted">Deixe em branco para remover.</small>
                   </div>
                 </fieldset>
               </fieldset>
