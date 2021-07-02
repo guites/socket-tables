@@ -23,7 +23,7 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://localhost:3000/';
+    this.apiURL = 'http://192.168.10.104:3000/';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -1196,7 +1196,11 @@ class Table {
     if (validate.valid) {
       currentPage = 1;
       this.ticket_id = ticket_id;
-      small.innerText = 'Filtro aplicado.';
+      if (this.ticket_id == '') {
+        small.innerText = 'Filtro removido';
+      } else {
+        small.innerText = 'Filtro aplicado.';
+      }
       small.className = 'form-text text-success';
     } else {
       small.innerText = validate.message;
