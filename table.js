@@ -1472,6 +1472,26 @@ class Table {
   }
 
   /**
+   * Sobrescreve o comando ctrl f para uso na busca por descrição
+   */
+
+  focusOnDescriptionFilter(e, textarea) {
+    if (e.ctrlKey && e.keyCode == 70) {
+        e.preventDefault();
+        textarea.focus();
+    }
+  }
+
+  /**
+   * Remove filtros ao pressionar esc duas vezes.
+   * Ao apertar a primeira vez, mostra aviso.
+   */
+
+  removeAllFilters() {
+
+  }
+
+  /**
    * Adiciona as classes para estilização
    */
 

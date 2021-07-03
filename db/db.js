@@ -53,7 +53,7 @@ async function getAllStatus() {
   return statuses;
 }
 
-async function countAtendimentos(client_id = null, status_ids = [1, 2], ticket_id = null) {
+async function countAtendimentos(client_id = null, status_ids = [1, 2], ticket_id = null, description = null) {
 
   let status_in = "";
 
@@ -74,13 +74,15 @@ async function countAtendimentos(client_id = null, status_ids = [1, 2], ticket_i
   let sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in}`;
   if (client_id) {
     sql += ' AND client_id = ?';
-    //sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in} AND client_id = ?`;
     arg_params.push(client_id);
   }
   if (ticket_id) {
     sql += ' AND ticket = ?';
-    //sql = `SELECT COUNT(*) as count FROM atendimentos WHERE ${status_in} AND ticket = ?`;
     arg_params.push(ticket_id);
+  }
+  if (description) {
+    sql += ` AND obs LIKE ? `;
+    arg_params.push(`%${description}%`);
   }
 
   const count = await query (

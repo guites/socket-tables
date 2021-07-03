@@ -301,18 +301,32 @@
       s.socket.on('atualiza status', (newStatus) => table.handleAtualizaStatus(newStatus));
       s.socket.on('log', (log) => table.appendLog(log, document.querySelector('#audit-logs-list ul')));
 
+      // cacheia seletores usados mais de uma vez
+
+      var filterDescriptionTextArea = table.checkSelector('#filter-description');
+
       table.createTable();
       table.loadRowsFromDatabase(1, table.perPage, 'desc');
       table.addFormFunctions();
       table.insertAtendimento('#new-atendimento');
-      //var addRowBtn = table.addNewRow('#addRowBtn');
+
       var searchInput = table.enableClientFilter('#filter-clientes');
       var ticketsFilterInput = table.enableTicketsFilter('#filter-tickets');
-      var descriptionFilterInput = table.enableDescriptionFilter('#filter-description');
+
+      table.enableDescriptionFilter(filterDescriptionTextArea);
+
       var filtersForm = table.preventFormSubmit('#filter-form');
       table.enableStatusFilter();
       table.generateConfirmModal("body", "#scripts");
       table.defineUser("#openConfiguracoesBtn");
+
+
+      window.onkeydown = function(e) {
+        // sobrescreve ctrl + f
+        table.focusOnDescriptionFilter(e, filterDescriptionTextArea);
+        // limpa filtros com duplo tap no esc
+        table.removeAllFilters();
+      }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
 
