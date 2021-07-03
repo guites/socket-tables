@@ -24,6 +24,9 @@ class Table {
     // status marcados no filtro
     this.status_ids = [1, 2];
 
+    // utilizado para verificar se o usuário aperto esc duas vezes
+    this.escapeKeyPressed = 0;
+
     this.usuarios = [];
     this.statuses = [];
     this.apiURL = 'http://localhost:3000/';
@@ -1487,7 +1490,64 @@ class Table {
    * Ao apertar a primeira vez, mostra aviso.
    */
 
-  removeAllFilters() {
+  removeAllFilters(e, alertSection) {
+    if (e.key == 'Escape') {
+      this.confirmRemoveAllFilters();
+    }
+  }
+
+  confirmRemoveAllFilters() {
+
+    if 
+    (
+      (this.ticket_id == '') &&
+      (this.description == '') &&
+      ( (this.currentClientId == 0) || (this.currentClientId == null) ) &&
+      (this.status_ids.join() == [1, 2].join())
+    ){
+      //se nenhum filtro estiver marcado, não faço nada
+      return;
+    }
+
+    if (this.escapeKeyPressed == 1) {
+      // segundo aperto na tecla esc, remover filtros
+      this.ticket_id = '';
+      var tickets_input = this.checkSelector('#filter-tickets');
+      tickets_input.value = '';
+      tickets_input.nextElementSibling.innerText = '';
+
+      this.description = '';
+      var description_input = this.checkSelector('#filter-description');
+      description_input.value = '';
+      description_input.nextElementSibling.innerText = '';
+
+      this.currentClientId = null; 
+      var currentClientInput = this.checkSelector('#filter-clientes');
+      currentClientInput.value = '';
+      currentClientInput.nextElementSibling.nextElementSibling.innerText = '';
+
+      this.status_ids = [1, 2];
+      this.checkSelector('input[name="filter-status-1"]').checked = true;
+      this.checkSelector('input[name="filter-status-2"]').checked = true;
+      this.checkSelector('input[name="filter-status-3"]').checked = false;
+
+      this.escapeKeyPressed = 0;
+      alertSection.innerText = 'Filtros removidos com sucesso!';
+
+      // pega novamente atendimentos do banco
+      this.loadRowsFromDatabase(1, this.perPage, 'desc');
+      return;
+    }
+
+    this.escapeKeyPressed = 1;
+    alertSection.classList.add('show');   
+    window.setTimeout((e) => {
+      this.escapeKeyPressed = 0;
+      alertSection.classList.remove('show');
+      window.setTimeout(function() {
+        alertSection.innerHTML = 'Aperte <kbd>ESC</kbd> novamente para limpar os filtros.';
+      }, 150);
+    }, 2000);
 
   }
 

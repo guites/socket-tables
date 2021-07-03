@@ -10,6 +10,18 @@
       td textarea {
         resize:both;
       }
+      #alerts {
+        position: fixed;
+        opacity: 0;
+        top: -15px;
+        left: 50%;
+        transform: translate(-50%);
+        transition: all 150ms ease-out;
+      }
+      #alerts.show {
+        top:15px;
+        opacity: 1;
+      }
     </style>
   </head>
   <body>
@@ -286,6 +298,7 @@
       </div>
 
     </div>
+    <section id="alerts" class="alert alert-info">Aperte <kbd>ESC</kbd> novamente para limpar os filtros.</section>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="./socket.js"></script>
@@ -304,6 +317,7 @@
       // cacheia seletores usados mais de uma vez
 
       var filterDescriptionTextArea = table.checkSelector('#filter-description');
+      var alertSection = table.checkSelector('#alerts');
 
       table.createTable();
       table.loadRowsFromDatabase(1, table.perPage, 'desc');
@@ -325,7 +339,7 @@
         // sobrescreve ctrl + f
         table.focusOnDescriptionFilter(e, filterDescriptionTextArea);
         // limpa filtros com duplo tap no esc
-        table.removeAllFilters();
+        table.removeAllFilters(e, alertSection);
       }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
