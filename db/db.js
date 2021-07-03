@@ -156,11 +156,16 @@ async function getAtendimentosByClient(pg = 0, lmt = 25, order = 'DESC', client_
   return atendimentos;
 }
 
-async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC', status_ids = [1, 2], ticket_id = null) {
+async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC', status_ids = [1, 2], ticket_id = null, description = null) {
 
   // sobre o .toString() ali, depois de eu ter verificado se era um número válido,
   // https://github.com/sidorares/node-mysql2/issues/1239#issuecomment-760314979
   
+  if (description) {
+
+    console.log("description: ", description);
+
+  }
   let status_in = "";
 
   switch(status_ids.length) {
@@ -195,6 +200,11 @@ async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC', status_ids = [1
     if (ticket_id) {
       sql += ` AND atd.ticket = ? `;
       args_array.push(ticket_id.toString());
+    }
+
+    if (description) {
+      sql += ` AND atd.obs LIKE ? `;
+      args_array.push(`%${description}%`);
     }
 
     sql += `

@@ -1222,37 +1222,50 @@ class Table {
    */
 
   async descriptionFilterFunctionality(input) {
-    var description = input.value.trim();
+    var description = encodeURIComponent(input.value.trim());
     var small = input.nextElementSibling;
     var currentPage = this.currentPage;
 
-    // caso a pessoa manter o mesmo valor, não faz nada
-    if(this.ticket_id == ticket_id) return;
+    // caso a pessoa manter a mesma busca, não faz nada
+    if(this.description == description) return;
 
     //se não tiver valor no input, remove o filtro existente
-    if (ticket_id == '') {
-      this.ticket_id = '';
+    if (description == '') {
+      this.description = '';
       currentPage = 1;
     }
 
-    var validate = this.validateInput(input);
-
-    if (validate.valid) {
-      currentPage = 1;
-      this.ticket_id = ticket_id;
-      if (this.ticket_id == '') {
-        small.innerText = 'Filtro removido';
-      } else {
-        small.innerText = 'Filtro aplicado.';
-      }
-      small.className = 'form-text text-success';
+    // caso for uma busca válida ou remoção de filtro, preciso voltar pra pg 1, se não, mantenho na mesma página
+    
+    currentPage = 1;
+    this.description = description;
+    if (this.description == '') {
+      small.innerText = 'Filtro removido';
     } else {
-      small.innerText = validate.message;
-      small.className = 'form-text text-warning';
+      small.innerText = 'Filtro aplicado.';
     }
+    small.className = 'form-text text-success';
 
-    // caso for uma consulta válida ou remoção de filtro, preciso voltar pra pg 1, se não, mantenho na mesma página
-    await this.loadRowsFromDatabase(currentPage, this.perPage, 'desc', this.currentClientId, this.status_ids, this.ticket_id);
+    await this.loadRowsFromDatabase(currentPage, this.perPage, 'desc', this.currentClientId, this.status_ids, this.ticket_id, this.description);
+  }
+
+  /**
+   * Adiciona funcionalidade de busca por descrição de atendimento
+   */
+
+  async enableDescriptionFilter(textareaDOM) {
+    var textarea = this.checkSelector(textareaDOM);
+    var errorSpan = this.checkSelector("#filter-description-help");
+
+    // dispara o filtro ao apertar enter
+    textarea.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        this.descriptionFilterFunctionality(e.target);
+      }
+    });
+    textarea.addEventListener('focusout', (e) => {
+      this.descriptionFilterFunctionality(e.target);
+    });
   }
 
   /**

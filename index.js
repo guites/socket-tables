@@ -117,7 +117,7 @@ app.get('/api/status', async (req, res) => {
 
 app.get('/api/atendimentos', async (req, res, next) => {
 
-  let { page, limit, order, client_id, status_ids, ticket_id } = req.query;
+  let { page, limit, order, client_id, status_ids, ticket_id, description } = req.query;
 
   if(ticket_id) {
     if (isNaN(parseInt(ticket_id))) {
@@ -154,7 +154,7 @@ app.get('/api/atendimentos', async (req, res, next) => {
       atendimentos = await db.getAtendimentosByClient( ((page - 1) * limit), limit, order, client_id, status_ids, ticket_id );
     } else {
       count = await db.countAtendimentos(client_id, status_ids, ticket_id);
-      atendimentos = await db.getAtendimentos( ((page - 1) * limit), limit, order, status_ids, ticket_id );
+      atendimentos = await db.getAtendimentos( ((page - 1) * limit), limit, order, status_ids, ticket_id, description );
     }
     res.json({atendimentos, count: count[0].count});
   } catch(err) {
