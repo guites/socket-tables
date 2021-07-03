@@ -103,6 +103,9 @@ Já feito
   - ao remover o filtro por ticket, voltar os checkbox na marcação que estavam antes: **não foi feito, incorporei o id do ticket e o status na mesma consulta**
 - Tirar placeholder do ticket
 - Resize:both nas textareas da planilha \(foda-se, é melhor pra ler\)
+- Remover filtros ativos apertando ESC
+- Foco no campo de busca apertando ctrl-f
+- Adicionar filtro por descrição \(uso de query LIKE no banco\)
 
 #### DB MIGRATIONS
 
