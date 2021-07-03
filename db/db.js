@@ -111,7 +111,11 @@ async function getAllAtendimentos() {
   return atendimentos;
 }
 
-async function getAtendimentosByClient(pg = 0, lmt = 25, order = 'DESC', client_id, status_ids = [1,2], ticket_id) {
+async function getAtendimentosByClient(
+  pg = 0, lmt = 25, order = 'DESC',
+  client_id, status_ids = [1,2],
+  ticket_id = null, description = null)
+{
 
   // sobre o .toString() ali, depois de eu ter verificado se era um número válido,
   // https://github.com/sidorares/node-mysql2/issues/1239#issuecomment-760314979
@@ -142,10 +146,17 @@ async function getAtendimentosByClient(pg = 0, lmt = 25, order = 'DESC', client_
    INNER JOIN status s ON atd.status_id = s.id
    LEFT JOIN usuarios u ON u.sort_id = atd.user_id
    ${status_in}`;
+
   if (ticket_id) {
     sql += ` AND atd.ticket = ? `;
     args_array.push(ticket_id.toString());
   }
+
+  if (description) {
+    sql += ` AND atd.obs LIKE ? `;
+    args_array.push(`%${description}%`);
+  }
+
   sql += ` AND c.sort_id = ?
    ORDER BY atd.id ${order}
    LIMIT ?
@@ -161,11 +172,6 @@ async function getAtendimentos(pg = 0, lmt = 25, order = 'DESC', status_ids = [1
   // sobre o .toString() ali, depois de eu ter verificado se era um número válido,
   // https://github.com/sidorares/node-mysql2/issues/1239#issuecomment-760314979
   
-  if (description) {
-
-    console.log("description: ", description);
-
-  }
   let status_in = "";
 
   switch(status_ids.length) {
