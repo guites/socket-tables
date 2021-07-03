@@ -1565,4 +1565,29 @@ class Table {
     current.className = current.className + ' ' + classes;
 
   }
+
+  // método para agilizar depuração
+  createAtendimento () {
+
+    var form = document.querySelector('#new-atendimento')
+    var inputs = form.querySelectorAll('input');
+    var textarea = form.querySelector('textarea');
+    var submitBtn = document.querySelector('#addRowBtn');
+    inputs.forEach((input) => {
+      if (input.name == 'user_id') return;
+      if (input.name == 'client_id') {
+        input.setAttribute('data-clientid', 15);
+        input.value = 'ZENIR DISARZ';
+      }
+      if (input.name == 'data_retorno') {
+        input.value = '2021-07-12';
+      }
+      if (input.name == 'plataforma') {
+        input.value = 'Depuração';
+      }
+    });
+    textarea.value = 'Teste de registro via socket.io';
+    submitBtn.click();
+
+  }
 }
