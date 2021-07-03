@@ -23,6 +23,7 @@ Informações técnicas:
 
 *Pendentes*
 
+- novos atendimentos ficam com as datas de atendimento e retorno no formato errado.
 - em alguns casos a aba registros do usuário não está sendo populada, sem deixar nenhum erro no console.
 - ao marcar uma opção de filtro, por ex. aberto e deletado, e dar F5, o navegador mantém as checkbox marcadas mas não ativa o filtro.
 - Caso a pessoa estiver filtrando por atendimentos fechados, e outro usuário inserir uma linha, ela vai aparecer mesmo assim.
@@ -140,3 +141,5 @@ ALTER TABLE auditlogs ADD COLUMN criado_em DATETIME DEFAULT NOW();
 
 1. ~02/06/2021
 ![circa 06/2021](readme/todo02062021.png)
+2. ~03/07/2021
+![circa 07/2021](readme/todo03072021.png)
