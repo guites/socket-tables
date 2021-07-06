@@ -29,7 +29,7 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://localhost:3000/';
+    this.apiURL = 'http://192.168.10.104:3000/';
     this.currentPage = 1;
     this.usuario = {};
   }

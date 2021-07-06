@@ -9,6 +9,7 @@
     <style>
       td textarea {
         resize:both;
+        min-width: 100%;
       }
       #alerts {
         position: fixed;
@@ -17,8 +18,10 @@
         left: 50%;
         transform: translate(-50%);
         transition: all 150ms ease-out;
+        pointer-events: none;
       }
       #alerts.show {
+        pointer-events: initial;
         top:15px;
         opacity: 1;
       }

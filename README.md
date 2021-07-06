@@ -23,6 +23,7 @@ Informações técnicas:
 
 *Pendentes*
 
+- como a paginação está dentro do rodapé da tabela, se coloca por ex. 10 por pagina, fica muito comprido e desformata a tabela
 - novos atendimentos ficam com as datas de atendimento e retorno no formato errado.
 - em alguns casos a aba registros do usuário não está sendo populada, sem deixar nenhum erro no console.
 - ao marcar uma opção de filtro, por ex. aberto e deletado, e dar F5, o navegador mantém as checkbox marcadas mas não ativa o filtro.
