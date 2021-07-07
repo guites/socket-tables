@@ -23,6 +23,7 @@ Informações técnicas:
 
 *Pendentes*
 
+- quando digitar 'c', achar resultado com 'ç', 'a', achar resultado com 'á', etc...
 - como a paginação está dentro do rodapé da tabela, se coloca por ex. 10 por pagina, fica muito comprido e desformata a tabela
 - novos atendimentos ficam com as datas de atendimento e retorno no formato errado.
 - em alguns casos a aba registros do usuário não está sendo populada, sem deixar nenhum erro no console.
