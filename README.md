@@ -75,6 +75,7 @@ async function query(sql, params = null) {
 
 Implementar
 
+- filtrar atendimentos sem ticket
 - puxar x ultimos registros quando a pessoa carregar a página
 - colocar um overflow na ul dos registros
 - opção de clicar no registro pra ver detalhes, ou criar página com todos os registros?
