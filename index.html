@@ -303,6 +303,38 @@
     </div>
     <section id="alerts" class="alert alert-info">Aperte <kbd>ESC</kbd> novamente para limpar os filtros.</section>
 
+    <div class="modal fade" id="addTicketModal" tabindex="-1" aria-labelledby="addTicketModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addTicketModalLabel">Atrelar ticket</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <div>
+              <h6>Adicione um ticket existente</h6>
+              <input id="addExistingTicket_" type="text" name="ticket" placeholder="# Ticket" class="form-control form-control-sm">
+              <small id="addExistingTicketSmall" class="text-info">Adicione um # de ticket existente no Sortweb.</small>
+            </div>
+            <hr/>
+            <div>
+              <h6>Abra um ticket para este atendimento</h6>
+              <button type="button" class="btn btn-primary d-block" id="createTicketButton">Abrir ticket</button>
+              <small class="text-info">A abertura de ticket resulta no envio de e-mail ao cliente.</small>
+            </div>
+          </div>
+          <!-- <div class="modal-footer">
+            <div class="alert alert-secondary">
+              <strong>Lembre-se!</strong> Você só pode atrelar um ticket por atendimento.
+            </div>
+          </div> -->
+        </div>
+      </div>
+
+    </div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="./socket.js"></script>
     <script src="./table.js"></script>
@@ -321,6 +353,8 @@
 
       var filterDescriptionTextArea = table.checkSelector('#filter-description');
       var alertSection = table.checkSelector('#alerts');
+      var addTicketModal = table.checkSelector('#addTicketModal');
+      var addExistingTicketInput = table.checkSelector('#addTicketModal input[name=ticket]');
 
       table.createTable();
       table.loadRowsFromDatabase(1, table.perPage, 'desc');
@@ -344,6 +378,11 @@
         // limpa filtros com duplo tap no esc
         table.removeAllFilters(e, alertSection);
       }
+
+      addTicketModal.addEventListener('shown.bs.modal', function () {
+        addExistingTicketInput.focus()
+      });
+
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
 

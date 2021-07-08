@@ -29,7 +29,8 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://192.168.10.104:3000/';
+    this.apiURL = 'http://localhost:3000/';
+    this.sortwebURL = 'http://sort.guits.com.br';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -534,6 +535,78 @@ class Table {
   }
 
   /**
+   * Fetch para adicionar um ticket já existinte ao atendimento
+   */
+
+  addExistingTicket(modalSmall, createTicketButton, small, btn, table, atendimento_id) {
+    // usei o método bind nessa função, o this aqui se refere ao input que está recebendo o event listener
+    // table se refere a classe
+    if (this.value != "") {
+      var validate = table.validateInput(this);
+      modalSmall.innerText = 'Registrando, aguarde...';
+      this.disabled = true;
+      createTicketButton.disabled = true;
+      if (validate.valid) {
+        // fetch para adicionar # do ticket
+        fetch(`${table.apiURL}api/atendimentos/${atendimento_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type':'application/json'
+          },
+          body: JSON.stringify({column: "ticket", value: this.value, user_id: table.usuario.id })
+        })
+        .then((response) => {
+          if (!response.ok) {
+            return Promise.reject(response);
+          }
+          return response.json();
+        })
+        .then((res) => {
+          if (res.success) {
+            // altera estilos do botão fora do modal
+            small.innerHTML = "Salvo.";
+            small.className = "text-success";
+            table.bootstrapIt(btn, 'btn btn-light disabled');
+            btn.classList.remove('btn-primary');
+            btn.innerHTML = this.value;
+            // altera estilos do input dentro do modal
+            modalSmall.className = "text-success";
+            modalSmall.innerHTML = "Salvo.";
+            table.emitAddTicket({id: atendimento_id, ticket: this.value});
+          }
+          small.innerHTML = res.message;
+        })
+        .catch(async (err) => {
+          small.className = 'text-danger';
+          if (typeof err.json === "function") {
+            const jsonErr = await err.json();
+            small.innerHTML = jsonErr.message;
+          } else {
+            console.log(err);
+            small.innerHTML = "Erro no servidor.";
+          } 
+        });
+       } else {
+         switch (validate.message) {
+           case "Digite apenas números no campo <# Ticket>.":
+             modalSmall.innerHTML = "Apenas números.";
+             break;
+           case "O número do Ticket deve ter menos que 6 dígitos (valor máximo 99999).":
+             modalSmall.innerHTML = "Valor máx. 99999";
+             break;
+           default:
+             modalSmall.innerHTML = "Erro!";
+             break;
+         }
+         modalSmall.className = "text-warning";
+         // em caso de erro, libera o input pro usuário tentar novamente
+         createTicketButton.disabled = false;
+         this.disabled = false;
+       }
+     }
+  }
+
+  /**
    * Funcionalidade para o campo ticket na tabela
    */
 
@@ -541,86 +614,36 @@ class Table {
 
     if (cell === null) {
       var td = document.createElement('td');
-      var ticketInput = document.createElement('input');
-      ticketInput.type = 'hidden';
-      ticketInput.name = 'ticket';
-      ticketInput.placeholder = "# Ticket";
-      ticketInput.className = 'form-control form-control-sm';
       var btn = document.createElement('button');
       btn.type = "button";
       btn.className = "btn btn-secondary btn-sm d-block";
       btn.innerHTML = 'ticket';
       btn.id = `addTicketBtn_${atendimento_id}`;
+      btn.setAttribute('data-bs-target', `#addTicketModal`);
+      btn.setAttribute('data-bs-toggle', `modal`);
       var small = document.createElement("small");
       small.className = 'text-info';
+
       btn.addEventListener('click', (e) => {
-        ticketInput.type = "text";
-        btn.classList.add('d-none');
-        ticketInput.focus();
+
+        var addExistingTicketInput = this.checkSelector('#addTicketModal input[name=ticket]');
+        var modalSmall = this.checkSelector('#addExistingTicketSmall');
+        var createTicketButton = this.checkSelector('#addTicketModal #createTicketButton');
+
+        createTicketButton.disabled = false;
+        addExistingTicketInput.disabled = false;
+        addExistingTicketInput.value = '';
+        modalSmall.innerText = 'Adicione um # de ticket existente no Sortweb.';
+        modalSmall.className = 'text-info';
+        addExistingTicketInput.id = `addExistingTicket_${atendimento_id}`;
+
+        var addExistingTicketCallBack = this.addExistingTicket.bind(
+          addExistingTicketInput, modalSmall, createTicketButton,
+          small, btn, this, atendimento_id
+        );
+
+        addExistingTicketInput.addEventListener('blur', addExistingTicketCallBack);
       });
-      ticketInput.addEventListener('blur', (e) => {
-        if (e.target.value != "") {
-          var validate = this.validateInput(e.target);
-          if (validate.valid) {
-
-            // fetch para adicionar # do ticket
-            
-            fetch(`${this.apiURL}api/atendimentos/${atendimento_id}`, {
-              method: 'PUT',
-              headers: {
-                'Content-Type':'application/json'
-              },
-              body: JSON.stringify({column: "ticket", value: e.target.value, user_id: this.usuario.id })
-            })
-            .then((response) => {
-              if (!response.ok) {
-                return Promise.reject(response);
-              }
-              return response.json();
-            })
-            .then((res) => {
-              if (res.success) {
-
-                small.innerHTML = "Salvo.";
-                small.className = "text-success";
-                this.bootstrapIt(btn, 'btn btn-light disabled');
-                btn.classList.remove('btn-primary');
-                btn.innerHTML = e.target.value;
-                this.emitAddTicket({id: atendimento_id, ticket: e.target.value});
-
-              }
-              small.innerHTML = res.message;
-            })
-            .catch(async (err) => {
-              small.className = 'text-danger';
-              if (typeof err.json === "function") {
-                const jsonErr = await err.json();
-                small.innerHTML = jsonErr.message;
-              } else {
-                console.log(err);
-                small.innerHTML = "Erro no servidor.";
-              } 
-            });
-
-          } else {
-            switch (validate.message) {
-              case "Digite apenas números no campo <# Ticket>.":
-                small.innerHTML = "Apenas números.";
-                break;
-              case "O número do Ticket deve ter menos que 6 dígitos (valor máximo 99999).":
-                small.innerHTML = "Valor máx. 99999";
-                break;
-              default:
-                small.innerHTML = "Erro!";
-                break;
-            }
-            small.className = "text-warning";
-          }
-        }
-        btn.classList.remove('d-none');
-        ticketInput.type = "hidden";
-      });
-      td.appendChild(ticketInput);
       td.appendChild(btn);
       td.appendChild(small);
     } else {
@@ -1491,7 +1514,8 @@ class Table {
    */
 
   removeAllFilters(e, alertSection) {
-    if (e.key == 'Escape') {
+    // tecla esc não deve triggar remoção de filtro se algum modal estiver aberto
+    if (e.key == 'Escape' && !document.body.classList.contains('modal-open')) {
       this.confirmRemoveAllFilters();
     }
   }
