@@ -24,7 +24,7 @@ class Table {
     // status marcados no filtro
     this.status_ids = [1, 2];
 
-    // utilizado para verificar se o usuário aperto esc duas vezes
+    // utilizado para verificar se o usuário apertou esc duas vezes
     this.escapeKeyPressed = 0;
 
     this.usuarios = [];
@@ -47,13 +47,14 @@ class Table {
     s.socket.emit('add ticket', addedTicket);
   }
 
+  /**
+   * Lida com o recebimento da emitAddTicket
+   */
   handleAddTicket(addedTicket) {
 
-    /**
-     * Lida com o recebimento da emitAddTicket
-     */
     var updated = document.querySelector(`#addTicketBtn_${addedTicket.id}`);
     if (updated) {
+      // caso o ticket adicionado estiver aparecendo na listagem do usuário
       updated.innerHTML = addedTicket.ticket;
       this.bootstrapIt(updated, 'btn btn-light disabled');
       updated.classList.remove('btn-primary');
@@ -62,6 +63,17 @@ class Table {
         small.innerHTML = "Atualizado.";
         small.className = "text-warning";
       }
+    }
+    var addExistingTicketInput = document.querySelector(`#addExistingTicket_${addedTicket.id}`);
+    if (addExistingTicketInput) {
+      // caso a outra pessoa estiver com o modal desse atendimento aberto
+      addExistingTicketInput.value = addedTicket.ticket;
+      addExistingTicketInput.disabled = true;
+      var addExistingTicketInputSmall = addExistingTicketInput.nextElementSibling; 
+      addExistingTicketInputSmall.innerHTML = 'Ticket atrelado por outro usuário.';
+      addExistingTicketInputSmall.className = 'text-warning';
+      var addNewTicketBtn = document.querySelector('#createTicketButton');
+      addNewTicketBtn.disabled = true;
     }
   }
 
