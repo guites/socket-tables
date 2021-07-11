@@ -354,7 +354,6 @@
       var filterDescriptionTextArea = table.checkSelector('#filter-description');
       var alertSection = table.checkSelector('#alerts');
       var addTicketModal = table.checkSelector('#addTicketModal');
-      var addExistingTicketInput = table.checkSelector('#addTicketModal input[name=ticket]');
 
       table.createTable();
       table.loadRowsFromDatabase(1, table.perPage, 'desc');
@@ -380,6 +379,7 @@
       }
 
       addTicketModal.addEventListener('shown.bs.modal', function () {
+        var addExistingTicketInput = table.checkSelector('#addTicketModal input[name=ticket]');
         addExistingTicketInput.focus()
       });
 

@@ -414,7 +414,7 @@ class Table {
   }
 
   /**
-   * Gera o HTML para o Modal de confirmação
+   * Gera o HTML para o Modal de confirmação: alterar status para deletado
    */
 
   generateConfirmModal(parentEl, nextSibling) {
@@ -638,23 +638,27 @@ class Table {
 
       btn.addEventListener('click', (e) => {
 
+        var ticketsModal = this.checkSelector('#addTicketModal .modal-dialog .modal-content .modal-body div');
+
         var addExistingTicketInput = this.checkSelector('#addTicketModal input[name=ticket]');
+        // substitui o input por um clone pra remover event listeners anteriores
+        var newAddExistingTicketInput = addExistingTicketInput.cloneNode(true);
+        ticketsModal.replaceChild(newAddExistingTicketInput, addExistingTicketInput);
+
         var modalSmall = this.checkSelector('#addExistingTicketSmall');
         var createTicketButton = this.checkSelector('#addTicketModal #createTicketButton');
 
         createTicketButton.disabled = false;
-        addExistingTicketInput.disabled = false;
-        addExistingTicketInput.value = '';
+        newAddExistingTicketInput.disabled = false;
+        newAddExistingTicketInput.value = '';
         modalSmall.innerText = 'Adicione um # de ticket existente no Sortweb.';
         modalSmall.className = 'text-info';
-        addExistingTicketInput.id = `addExistingTicket_${atendimento_id}`;
-
+        newAddExistingTicketInput.id = `addExistingTicket_${atendimento_id}`;
         var addExistingTicketCallBack = this.addExistingTicket.bind(
-          addExistingTicketInput, modalSmall, createTicketButton,
+          newAddExistingTicketInput, modalSmall, createTicketButton,
           small, btn, this, atendimento_id
         );
-
-        addExistingTicketInput.addEventListener('blur', addExistingTicketCallBack);
+        newAddExistingTicketInput.addEventListener('blur', addExistingTicketCallBack);
       });
       td.appendChild(btn);
       td.appendChild(small);
