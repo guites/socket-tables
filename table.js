@@ -828,6 +828,21 @@ class Table {
   }
 
   /**
+   * Verifica a formatação das horas e corrige, se necessário
+   */
+  checkDateFormat(date) {
+
+    var rgx = /(\d{4})-(\d{2})-(\d{2})/g;
+    var matches = rgx.exec(date);
+    var date = date;
+    if (matches) {
+      date = matches[3] +"/"+matches[2]+"/"+matches[1].substring(2,4);
+    }
+    return date;
+
+  }
+
+  /**
    * Adiciona linhas através de um array de arrays
    */
 
@@ -890,6 +905,14 @@ class Table {
           case "cliente":
             var td = document.createElement('td');
             td.innerHTML = row.cliente.name;
+            break;
+          case "data_atendimento":
+            var td = document.createElement('td');
+            td.innerHTML = this.checkDateFormat(row[prop]);
+            break;
+          case "data_retorno":
+            var td = document.createElement('td');
+            td.innerHTML = this.checkDateFormat(row[prop]);
             break;
           default:
             var td = document.createElement('td');
@@ -1620,7 +1643,7 @@ class Table {
         input.value = 'ZENIR DISARZ';
       }
       if (input.name == 'data_retorno') {
-        input.value = '2021-07-12';
+        input.value = '2021-08-12';
       }
       if (input.name == 'plataforma') {
         input.value = 'Depuração';
