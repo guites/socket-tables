@@ -1242,6 +1242,8 @@ class Table {
       
       if (this.currentPage != 1) return;
       if (this.currentClientId) {
+        // depurar esta linha, aqui tá o bug que, quando filtra por cliente e cria um atendimento pra este cliente, ele não mostra o novo atendimento na planilha
+        console.log(rowsArray);
         if (rowsArray[0].cliente.client_id != this.currentClientId) return;
       }
       // aqui eu vou chamar a função que marca o registro na tela dos usuários, tipo um activity log
