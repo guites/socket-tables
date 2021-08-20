@@ -29,8 +29,8 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://localhost:3000/';
-    this.sortwebURL = 'http://sort.guits.com.br';
+    this.apiURL = 'http://192.168.10.104:3000/';
+    this.sortwebURL = 'https://app.sortweb.me';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -336,8 +336,10 @@ class Table {
               usuario: atd.usuario,
             },
             status: atd.status,
-            name: atd.name,
-            name: atd.name,
+            client:{
+              name: atd.client_name,
+              id: atd.client_id,
+            },
             ticket: atd.ticket,
             data_atendimento: atd.data_atendimento,
             data_retorno: atd.data_retorno,
@@ -546,13 +548,361 @@ class Table {
 
   }
 
+  remActivityButton(e) {
+    console.log(e.target.parentElement.parentElement.parentElement);
+  }
+
+  createTaskApiBtn(btnSelector) {
+    var createTaskApiBtn = this.checkSelector(btnSelector);
+    createTaskApiBtn.addEventListener('click', (e) => {
+      var atdId = this.checkSelector('#createTicketRadio').getAttribute('atendimento-id');
+      var submitBtn = e.target;
+      submitBtn.disabled = true;
+      var form = submitBtn.form;
+      var inputs = form.querySelectorAll('input, textarea, select');
+      var payload = {
+        Task: {
+          status_id: 5, // OS sempre criada com status Aberta
+        },
+        Activity: []
+      };
+      var validSubmission = true;
+      for (var i = 0; i < inputs.length; i++) {
+        var input = inputs[i];
+        // nenhum input pode ser vazio
+        if (input.value.trim() == '') validSubmission = false;
+        switch(input.name) {
+          case '[Task]effort':
+            var eff = input.value;
+            if(!/^[0-9]{2}:[0-9]{2}$/.test(eff)) {
+              validSubmission = false;
+            }
+            break;
+        }
+        if (!validSubmission) {
+          // quando o primeiro não validar, sai do loop
+          input.classList.add('is-invalid');
+          input.focus();
+          break;
+        }
+        // se chegou aqui, é válido
+        input.classList.remove('is-invalid');
+
+        if (input.name.startsWith('[Task]')) {
+          if (input.name == '[Task]client_name') {
+            payload.Task.client_id = input.getAttribute('data-client-id');
+          } else {
+            payload.Task[input.name.substr(6)] = input.value;
+          }
+        }
+        if (input.name.startsWith('data[Activity]')){
+          if (input.name.endsWith('[user_id]')) {
+            payload.Activity.push({user_id: input.value});
+          } else {
+            var currentActivity = payload.Activity.length - 1;
+            if (input.name.endsWith('[order]')) {
+              payload.Activity[currentActivity].order = input.value;
+            } else if (input.name.endsWith('[description]')) {
+              payload.Activity[currentActivity].description = input.value;
+            }
+          }
+        }
+      }
+      if (validSubmission) {
+        this.fetchCreateTask(payload, form, inputs, atdId);
+      } else {
+        submitBtn.disabled = false;
+      }
+      return;
+    });
+  }
+
+  fetchCreateTask(payload, form, inputs, atdId) {
+    // adicionar lógica para envio da task na API
+    var atdId = atdId;
+    const closeModalBtn = this.checkSelector('#addTicketModal .modal-dialog .modal-header button');
+    const taskButtons = document.querySelectorAll('#taskButtonsDiv button, .activityClose');
+    taskButtons.forEach((btn) => btn.disabled = true);
+    inputs.forEach((input) => input.disabled = true);
+    const alertsWrapper = this.checkSelector('#alerts-sort-api');
+    alertsWrapper.classList = 'show alert alert-info alert-dismissible';
+    alertsWrapper.innerHTML = `
+      <button type="button" class="btn-close" onclick="document.querySelector('#alerts-sort-api').classList.toggle('show'); return false;"></button>
+      <strong>Aguarde</strong>
+      <div class="spinner-border spinner-border-sm" role="status">
+        <span class="sr-only"></span>
+      </div>
+      <br/>Criando tarefa para o atendimento #${atdId}.
+    `;
+    fetch(this.apiURL + 'api/tasks', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: {
+        'content-type': 'application/json',
+      },
+    })
+    .then((response) => {
+      taskButtons.forEach((btn) => btn.disabled = false);
+      inputs.forEach((input) => input.disabled = false);
+      if (!response.ok) {
+        return Promise.reject(response);
+      }
+      return response.json();
+    })
+    .then((res) => {
+      var activitiesFieldset = this.checkSelector('#activitiesFieldset');
+      while (activitiesFieldset.children.length > 2) {
+        activitiesFieldset.removeChild(activitiesFieldset.lastChild);
+      }
+      form.reset();
+      var taskId = res.id.pop();
+      alertsWrapper.classList = 'show alert alert-success alert-dismissible';
+      alertsWrapper.innerHTML = `
+        <button type="button" class="btn-close" onclick="document.querySelector('#alerts-sort-api').classList.toggle('show'); return false;"></button>
+        <strong>Tarefa Registrada!</strong> OS <a class="alert-link" href="${this.sortwebURL}/tasks/adminTaskView/${taskId}" target="_blank">#${taskId}</a> para o atendimento #${atdId}.
+      `;
+      // atualiza o #ticket do atendimento. deve atualizar via socket
+      this.fetchAddCreatedTicketFromApi(atdId, taskId);
+    })
+    .catch(async (err) => {
+      console.log(err.status);
+      const errStatus = err.status;
+      let wrapperClass;
+      let wrapperMessage;
+      switch (errStatus) {
+        case 403:
+          wrapperClass = 'show alert alert-warning alert-dismissible';
+          wrapperMessage = 'Erro na autenticação!';
+          break;
+        case 400: 
+          wrapperClass = 'show alert alert-warning alert-dismissible';
+          wrapperMessage = 'Parâmetros incorretos enviados! Verifique a aba network.';
+          break;
+        case '500':
+          wrapperClass = 'show alert alert-danger alert-dismissible';
+          wrapperMessage = 'Erro interno! Verifique a API do Sortweb.';
+          break;
+        default:
+          wrapperClass = 'show alert alert-danger alert-dismissible';
+          wrapperMessage = 'Erro desconhecido! Avise o desenvolvedor.';
+      }
+      if (typeof err.json === "function") {
+        const jsonErr = await err.json();
+        alertsWrapper.classList = wrapperClass;
+        alertsWrapper.innerHTML = `
+          <button type="button" class="btn-close" onclick="document.querySelector('#alerts-sort-api').classList.toggle('show'); return false;"></button>
+          <strong>Erro ${errStatus}</strong>: ${wrapperMessage}
+        `;
+      } else {
+        console.log("Fetch error", err);
+      } 
+    });
+    closeModalBtn.click();
+  }
+
+  formatEffort(inputSelector) {
+
+    var effortInput = this.checkSelector(inputSelector);
+    effortInput.addEventListener('keyup', function(e) {
+      var string = e.target.value.replace(/[^0-9]+/, "");
+      var length = string.length;
+      if (length == 3) {
+        string = string.substr(0,2) + ":" + string.substr(-1,1);
+      } else if (length >= 4) {
+        string = string.substr(0,2) + ":" + string.substr(2,2);
+      }
+      effortInput.value = string;
+    });
+
+  }
+
+  addActivityButton(btnSelector, fieldsetSelector) {
+    var addActivityBtn = this.checkSelector(btnSelector);
+    var activitiesFieldset = this.checkSelector(fieldsetSelector);
+    addActivityBtn.addEventListener('click', function() {
+      var activities = activitiesFieldset.querySelectorAll('.mb-2.col-lg-6');
+      var activitiesCount = activities.length;
+      var activityDiv = activitiesFieldset.querySelector('.mb-2.col-lg-6');
+      var newActivityDiv = activityDiv.cloneNode(true);
+      var activityNumber = parseInt(activitiesCount);
+      newActivityDiv.querySelector('h5').innerText = (activityNumber + 1) + ".";
+      var newActivitySelect = newActivityDiv.querySelector('select');
+      newActivitySelect.name = `data[Activity][${activityNumber}][user_id]`;
+      newActivitySelect.id = `Activity${activityNumber}UserId`;
+      newActivityDiv.querySelector('label').setAttribute('for', `Activity${activityNumber}UserId`);
+
+      var newActivityInputHidden = newActivityDiv.querySelector('input[type=hidden]');
+      newActivityInputHidden.name = `data[Activity][${activityNumber}][order]`;
+      newActivityInputHidden.id = `Activity${activityNumber}order`;
+      newActivityInputHidden.value = activityNumber;
+
+      newActivityDiv.querySelector('label:nth-child(1)').setAttribute('for', `Activity${activityNumber}Description`);
+      newActivityDiv.querySelector('textarea').name = `data[Activity][${activityNumber}][description]`;
+      newActivityDiv.querySelector('textarea').id = `Activity${activityNumber}Description`;
+
+      var activityDivCloseBtn = newActivityDiv.querySelector('button');
+      activityDivCloseBtn.disabled = false;
+      activityDivCloseBtn.addEventListener(
+        'click',
+        function(e) {
+          e.target.parentElement.parentElement.parentElement.remove();
+          var activities = activitiesFieldset.querySelectorAll('.mb-2.col-lg-6');
+          for(var x = 0; x < activities.length; x++) {
+            activities[x].querySelector('h5').innerText = (x + 1) + '.';
+
+            var newActivitySelect = activities[x].querySelector('select');
+            newActivitySelect.name = `data[Activity][${x}][user_id]`;
+            newActivitySelect.id = `Activity${x}UserId`;
+            activities[x].querySelector('label').setAttribute('for', `Activity${x}UserId`);
+
+            var newActivityInputHidden = activities[x].querySelector('input[type=hidden]');
+            newActivityInputHidden.name = `data[Activity][${x}][order]`;
+            newActivityInputHidden.id = `Activity${x}order`;
+            newActivityInputHidden.value = x;
+
+            activities[x].querySelector('label:nth-child(1)').setAttribute('for', `Activity${x}Description`);
+            activities[x].querySelector('textarea').name = `data[Activity][${x}][description]`;
+            activities[x].querySelector('textarea').id = `Activity${x}Description`;
+          }
+        },
+        false
+      );
+
+      activitiesFieldset.appendChild(newActivityDiv);
+    });
+  }
+
   /**
-   * Fetch para adicionar um ticket já existinte ao atendimento
+   * Toggle de formulário nos radio button (ticket existente / criar ticket)
+   */
+  toggleTicketRadio(data_selector) {
+    var modalDialog = document.querySelector('#addTicketModal .modal-dialog');
+    var radios = document.querySelectorAll(`[${data_selector}]`);
+    // considera como atendente o usuário atual das planilhas
+    var atd_user_id = this.usuario.id;
+    radios.forEach((radio) => {
+      radio.addEventListener('click', function(e) {
+        var radio_form = document.getElementById(radio.getAttribute(data_selector));
+        radio_form.style.display = 'block';
+        if (radio_form.id == 'addTicketFormWrapper') {
+          // carrega dados do atendimento atual
+          modalDialog.classList.add('modal-lg');
+          
+          // cachear esses seletores, pois é sempre o mesmo form. depois do envio, dou reset.
+          var atd_id = e.target.getAttribute('atendimento-id');
+          var atd_textarea = document.querySelector(`[data-atendimentoid="${atd_id}"]`);
+          var atd_row = atd_textarea.parentElement.parentElement;
+          // atendimentos antigos não possuem o nome do atendente atrelado no html
+          if (atd_row.children[0].children.length > 1) {
+            var atd_user = atd_row.children[0].children[1].innerText;
+          }
+          
+          var atd_client = atd_row.children[2].innerText;
+          var atd_client_id = atd_row.children[2].getAttribute('data-client-id');
+          // considerar já deixar um data-atd-inicio do seletor pra não precisar manipular por aqui
+          var atd_inicio_split = atd_row.children[4].innerText.split('/');
+          var atd_inicio = '20' + atd_inicio_split[2] + '-' + atd_inicio_split[1] + '-' + atd_inicio_split[0];
+          var atd_fim_split = atd_row.children[5].innerText.split('/');
+          var atd_fim = '20' + atd_fim_split[2] + '-' + atd_fim_split[1] + '-' + atd_fim_split[0];
+          var atd_plataforma = atd_row.children[6].innerText;
+
+          var taskEffortInput = radio_form.querySelector('#TaskEffort');
+          taskEffortInput.focus();
+          radio_form.querySelector('#TaskDescription').value = atd_textarea.value;
+          radio_form.querySelector('#TaskClientName').value = atd_client;
+          radio_form.querySelector('#TaskClientName').setAttribute('data-client-id', atd_client_id);
+          radio_form.querySelector('#TaskBeginDate').value = atd_inicio;
+          radio_form.querySelector('#TaskEndDate').value = atd_fim;
+
+          // marca o atendente na primeira atividade
+          radio_form.querySelector(`#Activity0UserId option[value="${atd_user_id}"]`).selected = "selected";
+          radio_form.querySelector('#Activity0Description').value = 'atendimento feito via ' + atd_plataforma;
+          
+        } else {
+          modalDialog.classList.remove('modal-lg');
+          var addExistingTicketInput = document.querySelector('#addExistingTicketWrapper input');
+          addExistingTicketInput.focus();
+        }
+        radios.forEach((r) => {
+          if (r.id != radio.id) {
+            var r_form = document.getElementById(r.getAttribute(data_selector));
+            r_form.style.display = 'none';
+          }
+        });
+      });
+    });
+  }
+
+  /**
+   * Fetch para adicionar um ticket ao atendimento após criação de ticket pela API
+   */
+
+    fetchAddCreatedTicketFromApi(atendimento_id, ticket_id) {
+      // este método deve funcionar mesmo que o atendimento não esteja mais aparecendo na tela
+      // por ex. colocou pra criar e mudou de página ou adicionou um filtro
+      let btnOnScreen = true;
+      let btn;
+      let small;
+      try {
+        btn = this.checkSelector(`#addTicketBtn_${atendimento_id}`);
+        small = this.checkSelector(btn.nextSibling);
+      } catch (e) {
+        btnOnScreen = false;
+      }
+      // fetch para adicionar # do ticket
+      fetch(`${table.apiURL}api/atendimentos/${atendimento_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type':'application/json'
+        },
+        body: JSON.stringify({column: "ticket", value: ticket_id, user_id: this.usuario.id })
+      })
+      .then((response) => {
+        if (!response.ok) {
+          return Promise.reject(response);
+        }
+        return response.json();
+      })
+      .then((res) => {
+        if (res.success) {
+          // altera estilos do botão fora do modal
+          if (btnOnScreen) {
+            small.innerHTML = "Salvo.";
+            small.className = "text-success";
+            this.bootstrapIt(btn, 'btn btn-light disabled');
+            btn.classList.remove('btn-primary');
+            btn.innerHTML = ticket_id;
+          }
+          this.emitAddTicket({id: atendimento_id, ticket: ticket_id});
+        }
+        if (btnOnScreen) {
+          small.innerHTML = res.message;
+        }
+      })
+      .catch(async (err) => {
+        if (btnOnScreen) {
+          small.className = 'text-danger';
+          if (typeof err.json === "function") {
+            const jsonErr = await err.json();
+            small.innerHTML = jsonErr.message;
+          } else {
+            console.log(err);
+            small.innerHTML = "Erro no servidor.";
+          } 
+        }
+      });
+    } 
+
+  /**
+   * Fetch para adicionar um ticket já existinte ao atendimento colocando número de ticket no input
    */
 
   addExistingTicket(modalSmall, createTicketButton, small, btn, table, atendimento_id) {
     // usei o método bind nessa função, o this aqui se refere ao input que está recebendo o event listener
     // table se refere a classe
+    
+    var radio = document.querySelector('[data-display-target="addExistingTicketWrapper"]');
+    if (!radio.checked) return;
     if (this.value != "") {
       var validate = table.validateInput(this);
       modalSmall.innerText = 'Registrando, aguarde...';
@@ -638,27 +988,47 @@ class Table {
 
       btn.addEventListener('click', (e) => {
 
-        var ticketsModal = this.checkSelector('#addTicketModal .modal-dialog .modal-content .modal-body div');
+        /**
+         * Por padrão, adc ticket existente selecionado
+         */
 
-        var addExistingTicketInput = this.checkSelector('#addTicketModal input[name=ticket]');
+        var adcTicketLabel = this.checkSelector('label[for=addExistingTicketRadio]');
+        adcTicketLabel.click();
+
+        /**
+         * Adicionar ticket já existente
+         */
+        var ticketsModal = this.checkSelector('#addExistingTicketWrapper');
+        var modalSmall = this.checkSelector('#addExistingTicketSmall');
+
+        var addExistingTicketInput = this.checkSelector('#addExistingTicketWrapper input[name=ticket]');
         // substitui o input por um clone pra remover event listeners anteriores
         var newAddExistingTicketInput = addExistingTicketInput.cloneNode(true);
         ticketsModal.replaceChild(newAddExistingTicketInput, addExistingTicketInput);
 
-        var modalSmall = this.checkSelector('#addExistingTicketSmall');
-        var createTicketButton = this.checkSelector('#addTicketModal #createTicketButton');
+        /**
+         * Criar novo ticket via API
+         */
+        var createTicketRadio = this.checkSelector('#createTicketRadio');
+        //var newCreateTicketButton = createTicketButton.cloneNode(true);
+        //ticketsModal.replaceChild(newCreateTicketButton, createTicketButton);
 
-        createTicketButton.disabled = false;
+        createTicketRadio.disabled = false;
+        createTicketRadio.setAttribute('atendimento-id', atendimento_id);
         newAddExistingTicketInput.disabled = false;
         newAddExistingTicketInput.value = '';
         modalSmall.innerText = 'Adicione um # de ticket existente no Sortweb.';
         modalSmall.className = 'text-info';
         newAddExistingTicketInput.id = `addExistingTicket_${atendimento_id}`;
         var addExistingTicketCallBack = this.addExistingTicket.bind(
-          newAddExistingTicketInput, modalSmall, createTicketButton,
+          newAddExistingTicketInput, modalSmall, createTicketRadio,
           small, btn, this, atendimento_id
         );
         newAddExistingTicketInput.addEventListener('blur', addExistingTicketCallBack);
+
+        //createTicketFormCallBack = this.createTicketForm.bind();
+
+        //newCreateTicketButton.addEventListener('click', createTicketFormCallBack);
       });
       td.appendChild(btn);
       td.appendChild(small);
@@ -670,6 +1040,10 @@ class Table {
     }
 
     return td;
+
+  }
+
+  createTicketForm() {
 
   }
 
@@ -902,9 +1276,10 @@ class Table {
           case "obs":
             var td = this.observacaoCell(row[prop], row['id'].id);
             break;
-          case "cliente":
+          case "client":
             var td = document.createElement('td');
-            td.innerHTML = row.cliente.name;
+            td.innerHTML = row.client.name;
+            td.setAttribute('data-client-id', row.client.id);
             break;
           case "data_atendimento":
             var td = document.createElement('td');
@@ -945,7 +1320,7 @@ class Table {
     // valida a variável btnDOM
     if (typeof x == 'string') {
       var x = document.querySelector(x);
-      if (!x) throw new TypeError('O Seletor deve ser referente a um elemento existente no DOM!', 'table.js');
+      if (!x) throw new TypeError(`O Seletor deve ser referente a um elemento existente no DOM! ${x}`, 'table.js');
     } else {
       // como não é um selector, eu preciso testar se é um elemento html válido
       if (!x instanceof HTMLElement) throw new TypeError('O objeto passado deve ser um HTMLElement válido!','table.js');
@@ -1639,11 +2014,11 @@ class Table {
     inputs.forEach((input) => {
       if (input.name == 'user_id') return;
       if (input.name == 'client_id') {
-        input.setAttribute('data-clientid', 15);
-        input.value = 'ZENIR DISARZ';
+        input.setAttribute('data-clientid', 219);
+        input.value = 'JANTARA';
       }
       if (input.name == 'data_retorno') {
-        input.value = '2021-08-12';
+        input.value = '2021-08-28';
       }
       if (input.name == 'plataforma') {
         input.value = 'Depuração';

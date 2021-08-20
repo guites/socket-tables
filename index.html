@@ -4,14 +4,14 @@
     <meta http-equiv="Content-type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta encoding="UTF-8">
-    <title>To-do list | AstrusWeb</title>
+    <title>To-do list | AstrusDigital</title>
     <link rel="stylesheet" href="bootstrap.min.css">
     <style>
       td textarea {
         resize:both;
         min-width: 100%;
       }
-      #alerts {
+      #alerts, #alerts-sort-api {
         position: fixed;
         opacity: 0;
         top: -15px;
@@ -20,17 +20,23 @@
         transition: all 150ms ease-out;
         pointer-events: none;
       }
-      #alerts.show {
+      #alerts.show, #alerts-sort-api.show {
         pointer-events: initial;
         top:15px;
         opacity: 1;
+      }
+      #alerts-sort-api.show {
+        top: calc(15px + 56.5px + 10px);
+      }
+      .toggleTicket input[type="radio"]:checked+label {
+        color: #2a9fd6 !important;
       }
     </style>
   </head>
   <body>
     <div class="navbar navbar-expand-lg navbar-dark bg-dark">
       <div class="container">
-        <span class="navbar-brand">Astrusweb</span>
+        <span class="navbar-brand">AstrusDigital</span>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
         </button>
@@ -302,9 +308,14 @@
 
     </div>
     <section id="alerts" class="alert alert-info">Aperte <kbd>ESC</kbd> novamente para limpar os filtros.</section>
+    <!-- <section id="alerts-sort-api" class="alert alert-info"></section> -->
+    <div id="alerts-sort-api" class="alert alert-dismissible alert-success">
+    </div>
+
+
 
     <div class="modal fade" id="addTicketModal" tabindex="-1" aria-labelledby="addTicketModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
+      <div class="modal-dialog modal-lg" style="transition: all .3s ease-out,-webkit-transform .3s ease-out">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="addTicketModalLabel">Atrelar ticket</h5>
@@ -314,22 +325,129 @@
           </div>
           <div class="modal-body">
             <div>
+
+              <div class="toggleTicket">
+                <div class="form-check">
+                  <input class="form-check-input" data-display-target="addExistingTicketWrapper" type="radio" name="atrelarTicketRadio" id="addExistingTicketRadio" checked>
+                  <label class="form-check-label" for="addExistingTicketRadio">
+                    Adicionar existente
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" data-display-target="addTicketFormWrapper" type="radio" name="atrelarTicketRadio" id="createTicketRadio">
+                  <label class="form-check-label" for="createTicketRadio">
+                    Abrir ticket
+                  </label>
+                </div>
+              </div>
+
+            </div>
+            <div class="mt-4" id="addExistingTicketWrapper">
               <h6>Adicione um ticket existente</h6>
               <input id="addExistingTicket_" type="text" name="ticket" placeholder="# Ticket" class="form-control form-control-sm">
               <small id="addExistingTicketSmall" class="text-info">Adicione um # de ticket existente no Sortweb.</small>
             </div>
-            <hr/>
-            <div>
-              <h6>Abra um ticket para este atendimento</h6>
-              <button type="button" class="btn btn-primary d-block" id="createTicketButton">Abrir ticket</button>
-              <small class="text-info">A abertura de ticket resulta no envio de e-mail ao cliente.</small>
+            <div style="display: none;" class="mt-4" id="addTicketFormWrapper">
+              <form id="addTicketForm">
+                <fieldset>
+                  <legend>Novo Ticket</legend>
+                  <div class='form-group row'>
+                    <div class="form-group col-lg-6">
+                      <label for="TaskTypeId" class="form-label">Tipo do Ticket</label>
+                      <select name="[Task]type_id" class="form-control form-select" id="TaskTypeId" required="required">
+                        <option value="1">Serviço</option>
+                        <option value="2">Manutenção*</option>
+                        <!-- <option value="4">Marketing Digital*</option> -->
+                        <option value="5">Correção</option>
+                        <!-- <option value="6">Conteúdo*</option> -->
+                        <!-- <option value="7">Consultoria*</option> -->
+                        <!-- <option value="8">Servidor</option> -->
+                        <option value="9">Treinamento</option>
+                        <!-- <option value="10">Estágio</option> -->
+                        <!-- <option value="11">Cotações/Planejamento</option> -->
+                        <option value="12">Reunião</option>
+                        <option value="13">Melhorias Sort</option>
+                        <option value="14">Projeto</option>
+                        <!-- <option value="15">Administrativo | Financeiro</option> -->
+                        <!-- <option value="16">Packaging*</option> -->
+                        <option value="17">Melhoria AGEC*</option>
+                        <option value="18">Refação</option>
+                      </select>
+                      <small class='text-info'><strong>*</strong> consome horas de contrato.</small>
+                    </div>
+                    <div class="form-group col-lg-6">
+                      <label for="TaskClientName" class="form-label">Cliente</label>
+                      <input placeholder="Cliente" name="[Task]client_name" readonly="" class="form-control" type="text" id="TaskClientName" autocomplete="off">
+                    </div>
+                  </div>
+                  <div class="form-group row">
+                    <div class="form-group col-lg-4">
+                      <label for="TaskBeginDate" class="form-label mt-2">Início:</label>
+                      <input name="[Task]begin_date" class="form-control" type="date" id="TaskBeginDate" required="required">
+                    </div>
+                    <div class="form-group col-lg-4">
+                      <label for="TaskEndDate" class="form-label mt-2">Finalização:</label>
+                      <input name="[Task]end_date" class="form-control" type="date" id="TaskEndDate" required="required">
+                    </div>
+                    <div class="form-group col-lg-4">
+                      <label for="TaskEffort" class="form-label mt-2">Esforço(h:m):</label>
+                      <input placeholder="HH:MM" name="[Task]effort" class="form-control" type="text" id="TaskEffort" required="required">
+                      <div class="invalid-feedback">O esforço deve ser no formato HH:MM!</div>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="TaskName" class="form-label mt-2">Identificação:</label>
+                    <input name="[Task]name" placeholder="Nome da Tarefa" class="form-control" maxlength="255" type="text" id="TaskName" required="required">
+                    <div class="invalid-feedback">O nome da tarefa não pode estar vazio!</div>
+                  </div>
+                  <div class="form-group">
+                    <label for="TaskDescription" class="form-label mt-2">Descrição:</label>
+                    <textarea name="[Task]description" class="form-control" rows="5" id="TaskDescription" placeholder="descrição da tarefa"></textarea>
+                    <div class="invalid-feedback">A descrição é obrigatória!</div>
+                  </div>
+                  <div class="form-group">
+                    <label for="TaskTags" class="form-label mt-1">Tags(separadas por vírgula):</label>
+                    <input placeholder="tags,separadas,por,vírgula" value="sockettables" name="[Task]tags" class="form-control" type="text" id="TaskTags">
+                    <div class="invalid-feedback">Adicione ao menos uma tag!</div>
+                  </div>
+                </fieldset>
+                <fieldset id="activitiesFieldset" class="row">
+                  <legend class="mt-2">Atividades</legend>
+                  <div class="mb-2 col-lg-6">
+                    <div class='form-group'>
+                      <div class="toast-header">
+                        <h5 class="m-0">1.</h5>
+                        <button type="button" disabled class="btn-close ms-auto activityClose" aria-label="Close">
+                          <span aria-hidden="true"></span>
+                        </button>
+                      </div>
+                      <label for="Activity0UserId" class="form-label mt-1">Responsável:</label>
+                      <select name="data[Activity][0][user_id]" class="form-control form-select" id="Activity0UserId" required="required">
+                        <option value="16">jantara</option>
+                        <option value="50">murilo</option>
+                        <option value="55">gustavo</option>
+                        <option value="69">mlucas</option>
+                        <option value="70">gabrielb</option>
+                        <option value="84">guilhermea</option>
+                        <option value="104">felipe</option>
+                        <option value="105">andressa</option>
+                      </select>
+                    </div>
+                    <input type="hidden" name="data[Activity][0][order]" required="required" value="0" class="order" id="Activity0Order">
+                    <div class="form-group">
+                      <label for="Activity0Description" class="form-label mt-1">Descrição:</label>
+                      <textarea name="data[Activity][0][description]" required="required" autocomplete="off" class="form-control" placeholder="descrição da atividade" rows="3" id="Activity0Description"></textarea>
+                      <div class="invalid-feedback">A descrição da atividade não pode estar vazia!</div>
+                    </div>
+                  </div>
+                </fieldset>
+                <div id="taskButtonsDiv" class="mb-2 mt-1">
+                  <button id="addActivityBtn" type="button" class="btn btn-secondary">Adicionar atividade</button>
+                  <button id="createTaskApiBtn" type="button" class="btn btn-primary">Criar ticket</button>
+                </div>
+              </form>
             </div>
           </div>
-          <!-- <div class="modal-footer">
-            <div class="alert alert-secondary">
-              <strong>Lembre-se!</strong> Você só pode atrelar um ticket por atendimento.
-            </div>
-          </div> -->
         </div>
       </div>
 
@@ -370,7 +488,6 @@
       table.generateConfirmModal("body", "#scripts");
       table.defineUser("#openConfiguracoesBtn");
 
-
       window.onkeydown = function(e) {
         // sobrescreve ctrl + f
         table.focusOnDescriptionFilter(e, filterDescriptionTextArea);
@@ -382,6 +499,11 @@
         var addExistingTicketInput = table.checkSelector('#addTicketModal input[name=ticket]');
         addExistingTicketInput.focus()
       });
+
+      table.toggleTicketRadio('data-display-target');
+      table.addActivityButton('#addActivityBtn', '#activitiesFieldset');
+      table.createTaskApiBtn('#createTaskApiBtn');
+      table.formatEffort('#TaskEffort');
 
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>

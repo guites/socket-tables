@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -7,6 +8,9 @@ const { Server } = require("socket.io");
 const io = new Server(server);
 const db = require('./db/db');
 const bodyParser = require('body-parser');
+const fetch = require('node-fetch');
+const FormData = require('form-data');
+const sortURL = process.env.SORTWEB_URL;
 
 function clientErrorHandler (err, req, res, next) {
   console.log(req.xhr);
@@ -165,7 +169,6 @@ app.get('/api/atendimentos', async (req, res, next) => {
 });
 
 app.put('/api/atendimentos/:id', async(req, res) => {
-  console.log(req.body);
   if (!req.body.user_id) {
     return res.status(400).json({
       success: false,
@@ -304,6 +307,38 @@ async function validateNewAtendimento(atd) {
   return body;
 }
 
+app.post('/api/tasks', async (req, res) => {
+  // const formdata = new FormData();
+  var requestOptions = {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'Authorization': 'Basic ' + Buffer.from(process.env.SORT_API_USER_KEY +":"+process.env.SORT_API_USER_SECRET).toString('base64'),
+      'Origin': process.env.SORT_API_ORIGIN,
+    },
+    body: JSON.stringify(req.body)
+  };
+
+  fetch(`${sortURL}/api/tasks.json`, requestOptions)
+  .then(response => {
+    if (response.status == 201) {
+      return response.json();
+    } else {
+      return Promise.reject(response);
+    }
+  })
+  .then((resp) => {
+    res.json(resp);
+  })
+  .catch(async (error) => {
+    res.status(error.status).json({
+      "success": false,
+      "message": "Ocorreu um erro ao conectar-se à API do Sortweb.",
+    });
+  });
+});
+
+
 app.post('/api/atendimentos', async (req, res) => {
 
   let body;
@@ -336,9 +371,9 @@ app.post('/api/atendimentos', async (req, res) => {
           usuario: body.username,
         },
         status: body.status_name,
-        cliente: {
+        client: {
           name: body.client_name,
-          client_id: body.client_id,
+          id: body.client_id,
         },
         ticket: req.body.ticket,
         data_atendimento: req.body.data_atendimento,
@@ -372,7 +407,6 @@ io.on('connection', (socket) => {
   io.emit("user count", total);
 
   socket.on('add ticket', (addedTicket) => {
-    console.log(addedTicket);
     socket.broadcast.emit('add ticket', addedTicket);
   })
 
@@ -381,7 +415,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('atualiza obs', (newObs) => {
-    console.log(newObs);
     socket.broadcast.emit('atualiza obs', newObs);
   });
 
