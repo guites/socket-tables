@@ -818,7 +818,7 @@ class Table {
 
           // marca o atendente na primeira atividade
           radio_form.querySelector(`#Activity0UserId option[value="${atd_user_id}"]`).selected = "selected";
-          radio_form.querySelector('#Activity0Description').value = 'atendimento feito via ' + atd_plataforma;
+          radio_form.querySelector('#Activity0Description').value = 'atendimento ' + atd_plataforma;
           
         } else {
           modalDialog.classList.remove('modal-lg');
