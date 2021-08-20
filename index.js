@@ -11,6 +11,8 @@ const bodyParser = require('body-parser');
 const fetch = require('node-fetch');
 const FormData = require('form-data');
 const sortURL = process.env.SORTWEB_URL;
+const showdown = require('showdown');
+const converter = new showdown.Converter();
 
 function clientErrorHandler (err, req, res, next) {
   console.log(req.xhr);
@@ -308,7 +310,8 @@ async function validateNewAtendimento(atd) {
 }
 
 app.post('/api/tasks', async (req, res) => {
-  // const formdata = new FormData();
+  // converte descrição para html
+  req.body.Task.description = converter.makeHtml(req.body.Task.description);
   var requestOptions = {
     method: 'POST',
     headers: {
