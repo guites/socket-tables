@@ -780,6 +780,7 @@ class Table {
     var radios = document.querySelectorAll(`[${data_selector}]`);
     // considera como atendente o usuário atual das planilhas
     var atd_user_id = this.usuario.id;
+    var atd_user_name = this.usuario.username;
     radios.forEach((radio) => {
       radio.addEventListener('click', function(e) {
         var radio_form = document.getElementById(radio.getAttribute(data_selector));
@@ -810,6 +811,7 @@ class Table {
           taskEffortInput.focus();
           radio_form.querySelector('#TaskDescription').value = atd_textarea.value;
           radio_form.querySelector('#TaskClientName').value = atd_client;
+          radio_form.querySelector('#TaskUserId').value = atd_user_id;
           radio_form.querySelector('#TaskClientName').setAttribute('data-client-id', atd_client_id);
           radio_form.querySelector('#TaskBeginDate').value = atd_inicio;
           radio_form.querySelector('#TaskEndDate').value = atd_fim;
