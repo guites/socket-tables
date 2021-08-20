@@ -552,6 +552,12 @@ class Table {
     console.log(e.target.parentElement.parentElement.parentElement);
   }
 
+  validateEmailFrontEnd(mail) {
+    var regex = /[a-zA-Z0-9-_\.]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-]+[\.[a-zA-Z0-9-]*/;
+    var matches = mail.match(regex);
+    return (matches !== null && matches.length > 0 && matches[0] === mail);
+  }
+
   createTaskApiBtn(btnSelector) {
     var createTaskApiBtn = this.checkSelector(btnSelector);
     createTaskApiBtn.addEventListener('click', (e) => {
@@ -567,21 +573,49 @@ class Table {
         Activity: []
       };
       var validSubmission = true;
+      var error_email = false;
+      var send_to_contact_email = false;
       for (var i = 0; i < inputs.length; i++) {
         var input = inputs[i];
-        // nenhum input pode ser vazio
-        if (input.value.trim() == '') validSubmission = false;
         switch(input.name) {
           case '[Task]effort':
             var eff = input.value;
-            if(!/^[0-9]{2}:[0-9]{2}$/.test(eff)) {
+            if(!/^[0-9]{2}:[0-9]{2}$/.test(eff) || eff.trim() == '') {
               validSubmission = false;
             }
             break;
+          case '[Task]send_email':
+            var mails = input.value.split(';');
+            if (mails.length == 1 && mails[0] == '') {
+              send_to_contact_email = true;
+              break;
+            }
+            for (var ii = 0; ii < mails.length; ii++) {
+              var mail = mails[ii].trim();
+              if (!this.validateEmailFrontEnd(mail)) {
+                validSubmission = false; 
+                error_email = mail;
+              }
+            }
+            break;
+          default:
+            if (input.value.trim() == '') validSubmission = false;
         }
         if (!validSubmission) {
           // quando o primeiro não validar, sai do loop
           input.classList.add('is-invalid');
+          if (input.name == '[Task]send_email') {
+            if (error_email !== false) {
+              var sanitizeDiv = document.createElement('DIV');
+              sanitizeDiv.innerHTML = error_email;
+              var sanitizeMail = sanitizeDiv.innerText;
+              if (sanitizeMail == '') {
+                input.nextElementSibling.innerText = `Não coloque ; após o último e-mail.`;
+              } else {
+                input.nextElementSibling.innerText = `Confira o email ${sanitizeDiv.innerText}`;
+              }
+            }
+          }
           input.focus();
           break;
         }
@@ -591,6 +625,10 @@ class Table {
         if (input.name.startsWith('[Task]')) {
           if (input.name == '[Task]client_name') {
             payload.Task.client_id = input.getAttribute('data-client-id');
+          } else if (input.name == '[Task]send_email') {
+            if (send_to_contact_email === false) {
+              payload.Task.send_email = input.value;
+            }
           } else {
             payload.Task[input.name.substr(6)] = input.value;
           }
