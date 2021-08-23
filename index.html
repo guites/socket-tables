@@ -199,7 +199,7 @@
               <fieldset class="row mt-1">
                 <div class="form-group col-lg-12">
                   <label for="obs" class="form-label">Descrição e observações</label>
-                  <textarea required="" class="form-control" rows="2" placeholder="Descrição e observações sobre o chamado." value="" name="obs" id="obs"></textarea>
+                  <textarea required="" class="form-control" rows="2" placeholder="Descrição e observações sobre o chamado." onkeyup="autoGrow(this);" value="" name="obs" id="obs"></textarea>
                 </div>
               </fieldset>
               <fieldset class="row mt-2">
@@ -403,7 +403,7 @@
                   </div>
                   <div class="form-group">
                     <label for="TaskDescription" class="form-label mt-2">Descrição:</label>
-                    <textarea name="[Task]description" class="form-control" rows="5" id="TaskDescription" placeholder="descrição da tarefa"></textarea>
+                    <textarea name="[Task]description" class="form-control" rows="5" id="TaskDescription" onkeyup="autoGrow(this);" placeholder="descrição da tarefa"></textarea>
                     <div class="invalid-feedback">A descrição é obrigatória!</div>
                   </div>
                   <div class="form-group row">
@@ -512,6 +512,13 @@
       table.addActivityButton('#addActivityBtn', '#activitiesFieldset');
       table.createTaskApiBtn('#createTaskApiBtn');
       table.formatEffort('#TaskEffort');
+
+      // autogrow nos textareas
+      function autoGrow (oField) {
+        if (oField.scrollHeight > oField.clientHeight) {
+          oField.style.height = oField.scrollHeight + "px";
+        }
+      }
 
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-gtEjrD/SeCtmISkJkNUaaKMoLD0//ElJ19smozuHV6z3Iehds+3Ulb9Bn9Plx0x4" crossorigin="anonymous"></script>
