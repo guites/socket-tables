@@ -22,7 +22,8 @@ class Table {
     // número de linhas por página da planilha
     this.perPage = 25;
     // status marcados no filtro
-    this.status_ids = [1, 2];
+    // this.status_ids = [1, 2];
+    this.status_ids = [1];
 
     // utilizado para verificar se o usuário apertou esc duas vezes
     this.escapeKeyPressed = 0;
@@ -1213,7 +1214,47 @@ class Table {
     ul.className = "pagination pagination mb-0";
     td.appendChild(ul);
 
-    for (var i = 1; i <= totalPages; i ++) { 
+    var initialPage, endPage, step = 25, times;
+
+    times = parseInt(currentPage / step);
+    initialPage = step * times;
+    if(initialPage == 0) initialPage = 1;
+    endPage = initialPage + step;
+    if(endPage == step + 1) endPage = step;
+    if (endPage >= totalPages) endPage = totalPages;
+
+    var nextBtn, prevBtn;
+
+    nextBtn = endPage + 1;
+    prevBtn = initialPage - 1;
+
+    // anteriores
+    if (initialPage > 1) {
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+
+      a.className = "page-link d-flex align-items-center";
+      a.href = "#";
+      a.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M8.354 1.646a.5.5 0 0 1 0 .708L2.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+          <path fill-rule="evenodd" d="M12.354 1.646a.5.5 0 0 1 0 .708L6.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+        </svg>
+        anteriores
+        `;
+      a.setAttribute('data-pagenum', prevBtn);
+
+      a.addEventListener("click", async (e) => {
+        const pageNum = e.target.getAttribute('data-pagenum');
+        await this.loadRowsFromDatabase(pageNum, this.perPage, 'desc', client_id);
+        this.currentPage = pageNum;
+      });
+
+      li.appendChild(a);
+      ul.appendChild(li);
+    }
+
+    for (var i = initialPage; i <= endPage; i ++) { 
 
       var li = document.createElement("li");
       var a = document.createElement("a");
@@ -1236,6 +1277,30 @@ class Table {
       ul.appendChild(li);
 
     }
+
+    // próximas
+    if (totalPages > endPage) {
+      var li = document.createElement("li");
+      var a = document.createElement("a");
+      a.className = "page-link d-flex align-items-center";
+      a.href = "#";
+      a.innerHTML = `
+        próximas
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-double-right" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M3.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L9.293 8 3.646 2.354a.5.5 0 0 1 0-.708z"/>
+          <path fill-rule="evenodd" d="M7.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L13.293 8 7.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+        `;
+      a.setAttribute('data-pagenum', nextBtn);
+      a.addEventListener("click", async (e) => {
+        const pageNum = e.target.getAttribute('data-pagenum');
+        await this.loadRowsFromDatabase(pageNum, this.perPage, 'desc', client_id);
+        this.currentPage = pageNum;
+      });
+      li.appendChild(a);
+      ul.appendChild(li);
+    }
+
 
     tr.appendChild(td);
 
