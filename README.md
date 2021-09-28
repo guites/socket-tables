@@ -86,6 +86,7 @@ Implementar
 - Permitir editar número de ticket apenas para atendimentos em aberto.
 - Campo "Conclusão": adicionar um comentário na hora de fechar o atendimento.
 - Integrar com o endpoint de fechar atividades: como a Andressa sempre cria uma atividade de revisão, quando mudar o status do atendimento pra fechado, abrir pop up pra digitar observação e fechar a atividade de revisão, fechando a ordem de serviço. Assim dá pra gerenciar as OS's pela planilha sem ter que fechar no SORT e voltar pra fechar o atendimento.
+- Ao criar ticket, botar um checkbox pra escolher a prioridade da tarefa \(assim não precisa abrir no sort pra setar prioridades\); _Vai precisar abrir endpoint no sort pra puxar as prioridades._
 
 Já feito
 
