@@ -80,13 +80,12 @@ Implementar
 - colocar um overflow na ul dos registros
 - opção de clicar no registro pra ver detalhes, ou criar página com todos os registros?
 - opção de clicar no atendimento pra ver histórico
-- utilizar esquema de popup.
 - Remover atendimento / editar atendimento inteiro ?
 - Esquema para "travar" o texto de um status passado. Por ex, quando um atendimento for fechado, o texto dele "aberto" não pode mais ser alterado. Se a pessoa quiser adicionar informações, tem que abrir novamente.
 - Permitir escrever nas observações apenas para atendimentos em aberto.
 - Permitir editar número de ticket apenas para atendimentos em aberto.
 - Campo "Conclusão": adicionar um comentário na hora de fechar o atendimento.
-- Integração sortweb: registro de tickets via API.
+- Integrar com o endpoint de fechar atividades: como a Andressa sempre cria uma atividade de revisão, quando mudar o status do atendimento pra fechado, abrir pop up pra digitar observação e fechar a atividade de revisão, fechando a ordem de serviço. Assim dá pra gerenciar as OS's pela planilha sem ter que fechar no SORT e voltar pra fechar o atendimento.
 
 Já feito
 
@@ -110,6 +109,8 @@ Já feito
 - Remover filtros ativos apertando ESC
 - Foco no campo de busca apertando ctrl-f
 - Adicionar filtro por descrição \(uso de query LIKE no banco\)
+- Integração sortweb: registro de tickets via API.
+- utilizar esquema de popup. **foi utilizado um modal pra criação de ordens de serviço**
 
 #### DB MIGRATIONS
 
