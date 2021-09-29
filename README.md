@@ -89,6 +89,8 @@ Implementar
 - Ao criar ticket, botar um checkbox pra escolher a prioridade da tarefa \(assim não precisa abrir no sort pra setar prioridades\); _Vai precisar abrir endpoint no sort pra puxar as prioridades._
 - Habilitar upload de imagem na criação de ticket por drag &amp; drop. O ideal seria criar um endpoint no sort pra cadastro de imagens, talvez relacionar com a OS, e depois colocar este campo pra usar na criação de tasks.
   - Quando arrastar e soltar a imagem no campo descrição da criação do ticket, anexa a imagem num input type file hidden e deixa na descrição apenas um marcador \[imagem1\], \[imagem2\], etc. daí a pessoa só vê realmente a imagem quando for visualizar a OS. Ou visualizar preview da imagem quando der hover, e mostrar opção de remover a imagem caso ela subiu errada etc.
+  - Fiz num esquema de listagem que abre um outra aba. Adicionar um fundo mais roxo no textarea quando o drop estiver válido.
+  - Quando clicar na pill com o index da imagem, adicionar mais uma tag na textarea, caso a pessoa deletar no texto e quiser usar a img novamente.
 
 Já feito
 

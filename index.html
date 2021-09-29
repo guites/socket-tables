@@ -403,8 +403,17 @@
                   </div>
                   <div class="form-group">
                     <label for="TaskDescription" class="form-label mt-2">Descrição:</label>
-                    <textarea name="[Task]description" class="form-control" rows="5" id="TaskDescription" onkeyup="autoGrow(this);" placeholder="descrição da tarefa"></textarea>
+                    <textarea name="[Task]description" class="form-control border border-2" rows="5" id="TaskDescription" onkeyup="autoGrow(this);" placeholder="descrição da tarefa"></textarea>
                     <div class="invalid-feedback">A descrição é obrigatória!</div>
+                  </div>
+                   <div class="form-group">
+                    <label for="[Task][File][0]" class="form-label mt-1">Anexar imagens:</label>
+                    <input multiple name="[Task][File][0]" id="TaskFile0" class="form-control" type="file" id="TaskFile">
+                  </div>
+                  <div class="form-group mt-2">
+                    <div style="max-height: 200px; overflow: scroll;" class="list-group" id="TaskFileLink">
+                      <!-- <a href="javascript:void(0)" id="TaskFileLink0" target="_blank" class="list-group-item list-group-item-action disabled d-flex justify-content-between align-items-center"><span class="badge bg-primary rounded-pill">0</span>Nenhuma imagem anexada.</a> -->
+                    </div>
                   </div>
                   <div class="form-group row">
                     <div class="form-group col-lg-6">
@@ -512,6 +521,7 @@
       table.addActivityButton('#addActivityBtn', '#activitiesFieldset');
       table.createTaskApiBtn('#createTaskApiBtn');
       table.formatEffort('#TaskEffort');
+      table.uploadImages('#TaskDescription', '#TaskFileLink', '#TaskFile0');
 
       // autogrow nos textareas
       function autoGrow (oField) {

@@ -30,8 +30,8 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://192.168.10.104:3000/';
-    this.sortwebURL = 'https://app.sortweb.me';
+    this.apiURL = 'http://localhost:3000/';
+    this.sortwebURL = 'http://sort.guits.com.br';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -2101,14 +2101,25 @@ class Table {
    */
 
   bootstrapIt(selector, classes) {
-
     var current = this.checkSelector(selector);
 
     // valida a variável classes
     if (typeof classes != 'string') throw new TypeError('As classes adicionadas devem ser em forma de string, separadas por espaços.');
+    var classesArray = classes.split(' ');
+    classesArray.forEach((cls) => {
+      if (!current.classList.contains(cls)) {
+        current.className = current.className + ' ' + cls;
+      }
+    });
+  }
 
-    current.className = current.className + ' ' + classes;
-
+  bootstrapOff(selector, classes) {
+    var current = this.checkSelector(selector);
+    if (typeof classes != 'string') throw new TypeError('As classes adicionadas devem ser em forma de string, separadas por espaços.');
+    var classArray = classes.split(' ');
+    classArray.forEach((cls) => {
+      current.classList.remove(cls);
+    });
   }
 
   // método para agilizar depuração
@@ -2125,7 +2136,7 @@ class Table {
         input.value = 'JANTARA';
       }
       if (input.name == 'data_retorno') {
-        input.value = '2021-08-28';
+        input.value = '2021-09-30';
       }
       if (input.name == 'plataforma') {
         input.value = 'Depuração';
@@ -2133,6 +2144,112 @@ class Table {
     });
     textarea.value = 'Teste de registro via socket.io';
     submitBtn.click();
-
   }
+
+  uploadImages(txtArea, lnkLst, flInpt) {
+    const textArea = this.checkSelector(txtArea);
+    const fileInput = this.checkSelector(flInpt)
+    const linkList = this.checkSelector(lnkLst);
+
+    fileInput.addEventListener("change", (e) => {
+      console.log(e.target.files);
+      this.setThumbToMarkdown(textArea, linkList, e.target.files);
+    });
+
+    textArea.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      this.bootstrapIt(textArea, 'border-info');
+    });
+
+    ["dragleave", "dragend"].forEach((type) => {
+      textArea.addEventListener(type, (e) => {
+        this.bootstrapOff(textArea, 'border-info');
+      });
+    });
+
+    textArea.addEventListener("drop", (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        this.setThumbToMarkdown(textArea, linkList, e.dataTransfer.files);
+      }
+      this.bootstrapOff(textArea, 'border-info');
+    });
+  }
+
+  setThumbToMarkdown(txtArea, lnksLst, filesArray) {
+    var linkList = this.checkSelector(lnksLst);
+    var textArea = this.checkSelector(txtArea);
+    if (!this.isObject(filesArray)) {
+      throw new TypeError('Os arquivos para upload devem ser um objeto fileList (https://developer.mozilla.org/en-US/docs/Web/API/FileList).');
+    }
+
+    // tenho que verificar as imagens já adicionadas, caso a pessoa adicione mais de uma vez
+    var offset = linkList.childElementCount;
+
+    for (let i = 0; i < filesArray.length; i++) {
+      if (filesArray[i].type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(filesArray[i]);
+        reader.onload = () => {
+          let linkWrapper;
+          let fileLink;
+          let fileCounter;
+          let fileRemoveBtn;
+
+          // preciso verificar se esse ID já existe.
+          let newId = 0;
+          while(document.querySelector(`#TaskFileLink${newId}`)) {
+            newId++;
+          }
+          const fileNameInLink = `![${filesArray[i].name}](/tmp/fake/${newId}/${filesArray[i].name})`;
+          textArea.value = `${textArea.value}\n${fileNameInLink}\n`;
+
+          linkWrapper = document.createElement('LI');
+          this.bootstrapIt(linkWrapper, 'list-group-item d-flex justify-content-between align-items-center pt-0 pb-1');
+
+          fileCounter = document.createElement('SPAN');
+          fileCounter.innerText = newId;
+          this.bootstrapIt(fileCounter, 'badge bg-primary rounded-pill');
+          linkWrapper.appendChild(fileCounter);
+
+          fileLink = document.createElement('A');
+
+          fileLink.id = `TaskFileLink${newId}`;
+          fileLink.target = "_blank";
+          linkWrapper.appendChild(fileLink);
+
+          fileRemoveBtn = document.createElement('BUTTON');
+          fileRemoveBtn.addEventListener('click', (e) => {
+            // https://stackoverflow.com/a/17886301
+            const prepString = fileNameInLink.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            console.log(prepString, fileNameInLink);
+            //const regex = new RegExp('!\\\[' + prepString + '\\\]\\(.*\\\/' + (parseInt(i)+parseInt(offset)) + '.*\\)', 'g');
+            const regex = new RegExp(prepString, 'g');
+            const string = textArea.value;
+            const matches = string.match(regex);
+            if (matches && matches.length > 0) {
+              matches.forEach((match) => {
+                textArea.value = textArea.value.replace(match, '');
+              });
+            }
+            e.target.parentElement.remove();
+            });
+            fileRemoveBtn.type = "button";
+            this.bootstrapIt(fileRemoveBtn, 'btn-close');
+            linkWrapper.appendChild(fileRemoveBtn);
+
+            linkList.appendChild(linkWrapper);
+            fileLink.href = URL.createObjectURL(new Blob([reader.result], {type: filesArray[i].type}));
+            fileLink.innerHTML = fileLink.innerHTML + filesArray[i].name;
+        }
+      }
+    }
+  }
+
+  isObject(variable) {
+    // https://attacomsian.com/blog/javascript-check-variable-is-object
+    return Object.prototype.toString.call(variable) === '[object FileList]';
+  }
+
 }
