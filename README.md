@@ -23,6 +23,7 @@ Informações técnicas:
 
 *Pendentes*
 
+- Quando der erro no envio via api do sort, salvar o json enviado, pra eu poder refazer o envio mais tarde e depurar
 - quando digitar 'c', achar resultado com 'ç', 'a', achar resultado com 'á', etc...
 - como a paginação está dentro do rodapé da tabela, se coloca por ex. 10 por pagina, fica muito comprido e desformata a tabela
 - novos atendimentos ficam com as datas de atendimento e retorno no formato errado.
