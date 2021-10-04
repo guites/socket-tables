@@ -742,15 +742,26 @@ class Table {
   formatEffort(inputSelector) {
 
     var effortInput = this.checkSelector(inputSelector);
-    effortInput.addEventListener('keyup', function(e) {
-      var string = e.target.value.replace(/[^0-9]+/, "");
-      var length = string.length;
-      if (length == 3) {
-        string = string.substr(0,2) + ":" + string.substr(-1,1);
-      } else if (length >= 4) {
-        string = string.substr(0,2) + ":" + string.substr(2,2);
+    var rgx = new RegExp('\\D','g');
+    effortInput.addEventListener('input', function(e) {
+      var val = e.target.value.replace(rgx, '');
+      if (val.length == 3) {
+        var digits = val.split('');
+        var first = digits.splice(0,1);
+        e.target.value = first + ':' + digits.join('');
+      } else if (val.length >= 4) {
+        var digits = val.split('');
+        var last = digits.splice(digits.length - 2,2);
+        e.target.value = digits.join('') + ':' + last.join('');
+      } else {
+        e.target.value = val;
       }
-      effortInput.value = string;
+    });
+    effortInput.addEventListener('focusout', function(e) {
+      var val = e.target.value.replace(rgx, '');
+      if (val.length <= 2) {
+        e.target.value = val + ':00';
+      }
     });
 
   }
