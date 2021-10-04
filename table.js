@@ -581,7 +581,7 @@ class Table {
         switch(input.name) {
           case '[Task]effort':
             var eff = input.value;
-            if(!/^[0-9]{2}:[0-9]{2}$/.test(eff) || eff.trim() == '') {
+            if(!/^[0-9]{1,2}:[0-9]{2}$/.test(eff) || eff.trim() == '') {
               validSubmission = false;
             }
             break;
@@ -760,7 +760,7 @@ class Table {
     effortInput.addEventListener('focusout', function(e) {
       var val = e.target.value.replace(rgx, '');
       if (val.length <= 2) {
-        e.target.value = val + ':00';
+        e.target.value = "";
       }
     });
 
