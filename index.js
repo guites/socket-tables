@@ -343,10 +343,9 @@ app.post('/api/tasks', async (req, res) => {
       }
     }
     if (res.status) {
-      res.status(error.status).json({
-        "success": false,
-        "message": "Ocorreu um erro ao conectar-se à API do Sortweb.",
-      });
+      var statusCode = error.status;
+      var resolvedError = await error.json();
+      res.status(error.status).json(resolvedError);
     } else {
       res.status(500).json({
         "success": false,

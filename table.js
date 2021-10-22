@@ -708,7 +708,6 @@ class Table {
       this.fetchAddCreatedTicketFromApi(atdId, taskId);
     })
     .catch(async (err) => {
-      console.log(err.status);
       const errStatus = err.status;
       let wrapperClass;
       let wrapperMessage;
@@ -731,6 +730,13 @@ class Table {
       }
       if (typeof err.json === "function") {
         const jsonErr = await err.json();
+        if (typeof jsonErr == 'object') {
+          // caso o erro venha bem formatado, sobrescrever a mensagem padrão
+          wrapperMessage = '';
+          for (let k in jsonErr) {
+            wrapperMessage = wrapperMessage + jsonErr[k] + '\n' ;
+          }
+        }
         alertsWrapper.classList = wrapperClass;
         alertsWrapper.innerHTML = `
           <button type="button" class="btn-close" onclick="document.querySelector('#alerts-sort-api').classList.toggle('show'); return false;"></button>
