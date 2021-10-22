@@ -581,7 +581,7 @@ class Table {
         switch(input.name) {
           case '[Task]effort':
             var eff = input.value;
-            if(!/^[0-9]{2}:[0-9]{2}$/.test(eff) || eff.trim() == '') {
+            if(!/^[0-9]{1,2}:[0-9]{2}$/.test(eff) || eff.trim() == '') {
               validSubmission = false;
             }
             break;
@@ -643,6 +643,10 @@ class Table {
               payload.Activity[currentActivity].order = input.value;
             } else if (input.name.endsWith('[description]')) {
               payload.Activity[currentActivity].description = input.value;
+            } else if (input.name.endsWith('[priority_id]')) {
+              if ( parseInt(input.value) != 0 ) {
+                payload.Activity[currentActivity].priority_id = input.value;
+              }
             }
           }
         }
@@ -759,7 +763,7 @@ class Table {
     });
     effortInput.addEventListener('focusout', function(e) {
       var val = e.target.value.replace(rgx, '');
-      if (val.length <= 2) {
+      if (val.length <= 2 && val != '') {
         e.target.value = val + ':00';
       }
     });
@@ -2136,7 +2140,7 @@ class Table {
         input.value = 'JANTARA';
       }
       if (input.name == 'data_retorno') {
-        input.value = '2021-08-28';
+        input.value = '2021-10-28';
       }
       if (input.name == 'plataforma') {
         input.value = 'Depuração';
