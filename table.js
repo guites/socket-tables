@@ -643,6 +643,10 @@ class Table {
               payload.Activity[currentActivity].order = input.value;
             } else if (input.name.endsWith('[description]')) {
               payload.Activity[currentActivity].description = input.value;
+            } else if (input.name.endsWith('[priority_id]')) {
+              if ( parseInt(input.value) != 0 ) {
+                payload.Activity[currentActivity].priority_id = input.value;
+              }
             }
           }
         }
@@ -704,7 +708,6 @@ class Table {
       this.fetchAddCreatedTicketFromApi(atdId, taskId);
     })
     .catch(async (err) => {
-      console.log(err.status);
       const errStatus = err.status;
       let wrapperClass;
       let wrapperMessage;
@@ -727,6 +730,13 @@ class Table {
       }
       if (typeof err.json === "function") {
         const jsonErr = await err.json();
+        if (typeof jsonErr == 'object') {
+          // caso o erro venha bem formatado, sobrescrever a mensagem padrão
+          wrapperMessage = '';
+          for (let k in jsonErr) {
+            wrapperMessage = wrapperMessage + jsonErr[k] + '\n' ;
+          }
+        }
         alertsWrapper.classList = wrapperClass;
         alertsWrapper.innerHTML = `
           <button type="button" class="btn-close" onclick="document.querySelector('#alerts-sort-api').classList.toggle('show'); return false;"></button>
@@ -759,8 +769,8 @@ class Table {
     });
     effortInput.addEventListener('focusout', function(e) {
       var val = e.target.value.replace(rgx, '');
-      if (val.length <= 2) {
-        e.target.value = "";
+      if (val.length <= 2 && val != '') {
+        e.target.value = val + ':00';
       }
     });
 
@@ -2136,7 +2146,7 @@ class Table {
         input.value = 'JANTARA';
       }
       if (input.name == 'data_retorno') {
-        input.value = '2021-08-28';
+        input.value = '2021-10-28';
       }
       if (input.name == 'plataforma') {
         input.value = 'Depuração';
