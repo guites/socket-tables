@@ -456,6 +456,14 @@
                       <textarea name="data[Activity][0][description]" required="required" autocomplete="off" class="form-control" placeholder="descrição da atividade" rows="3" id="Activity0Description"></textarea>
                       <div class="invalid-feedback">A descrição da atividade não pode estar vazia!</div>
                     </div>
+                    <div class="form-group">
+                      <label for="Activity0PriorityId" class="form-label mt-1">Prioridade:</label>
+                      <select name="data[Activity][0][priority_id]" class="form-control form-select" id="Activity0PriorityId">
+                        <option value="0" selected="selected">-- Escolha --</option>
+                        <option value="1">Urgente</option>
+                        <option value="2">Alta</option>
+                      </select>
+                    </div>
                   </div>
                 </fieldset>
                 <div id="taskButtonsDiv" class="mb-2 mt-1">

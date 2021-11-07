@@ -30,8 +30,8 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://localhost:3000/';
-    this.sortwebURL = 'http://sort.guits.com.br';
+    this.apiURL = 'http://192.168.10.104:3000/';
+    this.sortwebURL = 'https://app.sortweb.me';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -581,7 +581,7 @@ class Table {
         switch(input.name) {
           case '[Task]effort':
             var eff = input.value;
-            if(!/^[0-9]{2}:[0-9]{2}$/.test(eff) || eff.trim() == '') {
+            if(!/^[0-9]{1,2}:[0-9]{2}$/.test(eff) || eff.trim() == '') {
               validSubmission = false;
             }
             break;
@@ -643,6 +643,10 @@ class Table {
               payload.Activity[currentActivity].order = input.value;
             } else if (input.name.endsWith('[description]')) {
               payload.Activity[currentActivity].description = input.value;
+            } else if (input.name.endsWith('[priority_id]')) {
+              if ( parseInt(input.value) != 0 ) {
+                payload.Activity[currentActivity].priority_id = input.value;
+              }
             }
           }
         }
@@ -704,7 +708,6 @@ class Table {
       this.fetchAddCreatedTicketFromApi(atdId, taskId);
     })
     .catch(async (err) => {
-      console.log(err.status);
       const errStatus = err.status;
       let wrapperClass;
       let wrapperMessage;
@@ -727,6 +730,13 @@ class Table {
       }
       if (typeof err.json === "function") {
         const jsonErr = await err.json();
+        if (typeof jsonErr == 'object') {
+          // caso o erro venha bem formatado, sobrescrever a mensagem padrão
+          wrapperMessage = '';
+          for (let k in jsonErr) {
+            wrapperMessage = wrapperMessage + jsonErr[k] + '\n' ;
+          }
+        }
         alertsWrapper.classList = wrapperClass;
         alertsWrapper.innerHTML = `
           <button type="button" class="btn-close" onclick="document.querySelector('#alerts-sort-api').classList.toggle('show'); return false;"></button>
@@ -742,15 +752,26 @@ class Table {
   formatEffort(inputSelector) {
 
     var effortInput = this.checkSelector(inputSelector);
-    effortInput.addEventListener('keyup', function(e) {
-      var string = e.target.value.replace(/[^0-9]+/, "");
-      var length = string.length;
-      if (length == 3) {
-        string = string.substr(0,2) + ":" + string.substr(-1,1);
-      } else if (length >= 4) {
-        string = string.substr(0,2) + ":" + string.substr(2,2);
+    var rgx = new RegExp('\\D','g');
+    effortInput.addEventListener('input', function(e) {
+      var val = e.target.value.replace(rgx, '');
+      if (val.length == 3) {
+        var digits = val.split('');
+        var first = digits.splice(0,1);
+        e.target.value = first + ':' + digits.join('');
+      } else if (val.length >= 4) {
+        var digits = val.split('');
+        var last = digits.splice(digits.length - 2,2);
+        e.target.value = digits.join('') + ':' + last.join('');
+      } else {
+        e.target.value = val;
       }
-      effortInput.value = string;
+    });
+    effortInput.addEventListener('focusout', function(e) {
+      var val = e.target.value.replace(rgx, '');
+      if (val.length <= 2 && val != '') {
+        e.target.value = val + ':00';
+      }
     });
 
   }
@@ -2136,7 +2157,7 @@ class Table {
         input.value = 'JANTARA';
       }
       if (input.name == 'data_retorno') {
-        input.value = '2021-09-30';
+        input.value = '2021-10-28';
       }
       if (input.name == 'plataforma') {
         input.value = 'Depuração';
@@ -2251,5 +2272,4 @@ class Table {
     // https://attacomsian.com/blog/javascript-check-variable-is-object
     return Object.prototype.toString.call(variable) === '[object FileList]';
   }
-
 }
