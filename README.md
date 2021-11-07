@@ -18,42 +18,11 @@ Technical information:
 - Frontend using ES6 notation.
 - Styles and UX based on [bootstrap](https://getbootstrap.com/) using [cyborg](https://bootswatch.com/cyborg/) theme.
 
-
-## GLITCHES
-
-*Pendentes*
-
-- quando digitar 'c', achar resultado com 'ç', 'a', achar resultado com 'á', etc...
-- como a paginação está dentro do rodapé da tabela, se coloca por ex. 10 por pagina, fica muito comprido e desformata a tabela
-- novos atendimentos ficam com as datas de atendimento e retorno no formato errado.
-- em alguns casos a aba registros do usuário não está sendo populada, sem deixar nenhum erro no console.
-- ao marcar uma opção de filtro, por ex. aberto e deletado, e dar F5, o navegador mantém as checkbox marcadas mas não ativa o filtro.
-- Caso a pessoa estiver filtrando por atendimentos fechados, e outro usuário inserir uma linha, ela vai aparecer mesmo assim.
-- Validação do user\_id na inserção de linha, acho que tá deixando passar pro query no banco ids que não existem. verificar e fazer igual tá com a verificação do client\_id.
-- (em análise, pode causar transtorno caso a pessoa queira atualizar a lista...) Evitar que a pessoa possa enviar várias vezes o mesmo filtro, por ex, travar o filtro pelo cliente que já está sendo filtrado...
-- (em análise, foi adiciona função pra fechar interação com o banco [ver](https://github.com/guites/socket-tables/blob/main/db/db.js#L7)) Criar conexão com o banco uma única vez, ao invés de criar toda vez que é feito um query:
-```javascript
-const mysql = require('mysql2/promise');
-const config = require('./config');
-// const connection = await mysql.createConnection(config);
-// passar connection como parametro nas funções
-
-async function query(sql, params = null) {
-  const connection = await mysql.createConnection(config);
-  const [results, ] = await connection.execute(sql, params);
-  return results;
-}
-```
-- Aplica o filtro com o perPage em 10, num cliente que tem 30 entradas. Altera o perPage pra 100 e clica na terceira página => cai numa página com 100% filler rows.
-- Quando um usuário estiver utilizado o filtro, ele já carregou os clientes com atendimento no cache. Se for criado um atendimento pra um cliente diferente dos que existiam, ele não vai aparecer na listagem de clientes pra filtro até que o usuário atualize a página.
-- Alguns clientes quando são colocados no filtro, retornam a listagem com todas as linhas filler (possivelmente pq os atendimentos deles estão todos deletados)
-- Quando entra no campo cliente sem clicar, dá aquele problema do bootstrap que precisa de um .click()
-- Após uso do filtro e remoção, verificar se os hooks do socket voltam a funcionar normalmente.
-
 ## Implementations (To-do list's to-do list!)
 
 Pending Features
 
+- when searching for 'c', find results with 'ç', 'a', 'á', etc...
 - filter calls without ticket
 - show latest logs on pageload
 - add overflow to log's ul
