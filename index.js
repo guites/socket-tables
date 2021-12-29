@@ -334,18 +334,18 @@ app.post('/api/tasks', async (req, res) => {
     res.json(resp);
   })
   .catch(async (error) => {
-    if (typeof error.json === "function") {
-      try {
-        const jsonErr = await error.json();
-        console.log('linha 340', jsonErr);
-      } catch (e) {
-        console.log('linha 342', e);
-      }
-    }
-    if (res.status) {
+    if (error.status) {
       var statusCode = error.status;
-      var resolvedError = await error.json();
-      res.status(error.status).json(resolvedError);
+      try {
+        var resolvedError = await error.json();
+        res.status(error.status).json(resolvedError);
+      } catch (e) {
+        console.log(e);
+        res.status(error.status).json({
+          "success": false,
+          "message": "Erro de permissão ao conectar-se à API do Sortweb."
+        });
+      }
     } else {
       res.status(500).json({
         "success": false,
