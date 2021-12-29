@@ -309,6 +309,53 @@ async function validateNewAtendimento(atd) {
   return body;
 }
 
+app.post('/api/tasks/sync/status', async (req, res) => {
+  // const unsyncedCallsIds = db.getUnsyncedCalls(); // to do: escrever método que pega lista de id de tarefas baseado na última sincronização dos chamados
+  const unsyncedCallsIds = [23452, 23039, 23318];
+  const requestOptions = {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'Authorization': 'Basic ' + Buffer.from(process.env.SORT_API_USER_KEY +":"+process.env.SORT_API_USER_SECRET).toString('base64'),
+      'Origin': process.env.SORT_API_ORIGIN,
+    },
+    body: JSON.stringify({task_ids: unsyncedCallsIds})
+  };
+  fetch(`${sortURL}/api/tasksStatuses.json`, requestOptions)
+  .then(response => {
+    console.log(response);
+    if (response.status == 200) {
+      return response.json();
+    } else {
+      return Promise.reject(response);
+    }
+  })
+  .then((resp) => {
+    console.log(resp);
+    res.json(resp)
+  })
+  .catch(async (error) => {
+    console.log(error);
+    if (error.status) {
+      try {
+        var resolvedError = await error.json();
+        res.status(error.status).json(resolvedError);
+      } catch (e) {
+        console.log(e);
+        res.status(error.status).json({
+          "success": false,
+          "message": "Erro de permissão ao conectar-se à API do Sortweb."
+        });
+      }
+    } else {
+      res.status(500).json({
+        "success": false,
+        "message": "Ocorreu um erro ao conectar-se à API do Sortweb.",
+      });
+    }
+  });
+});
+
 app.post('/api/tasks', async (req, res) => {
   // converte descrição para html
   req.body.Task.description = converter.makeHtml(req.body.Task.description);
@@ -335,7 +382,6 @@ app.post('/api/tasks', async (req, res) => {
   })
   .catch(async (error) => {
     if (error.status) {
-      var statusCode = error.status;
       try {
         var resolvedError = await error.json();
         res.status(error.status).json(resolvedError);

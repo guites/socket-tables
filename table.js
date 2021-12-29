@@ -30,8 +30,8 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://192.168.10.104:3000/';
-    this.sortwebURL = 'https://app.sortweb.me';
+    this.apiURL = 'http://192.168.0.106:3000/';
+    this.sortwebURL = 'http://sortweb.test';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -369,6 +369,44 @@ class Table {
      * Fora de uso, após alterar status o usuário precisa
      * atualizar a pagina se quiser alterar novamente
      */
+  }
+
+  /**
+   * 
+   *  Sincroniza status dos chamados com status das tarefas atreladas no sort
+   */
+
+  fetchSyncStatuses() {
+    const syncStatusBtn = this.checkSelector('#sync-status-chamados');
+    syncStatusBtn.addEventListener('click', (e) => {
+      const btn = e.target;
+      btn.disabled = true;
+      fetch(`${this.apiURL}api/tasks/sync/status`, {
+        method: 'POST',
+        headers: {
+          'Content-Type':'application/json'
+        },
+      })
+      .then((response) => {
+        if (!response.ok) {
+          return Promise.reject(response);
+        }
+        return response.json();
+      })
+      .then((res) => {
+        btn.disabled = false;
+        console.log(res);
+      })
+      .catch(async (err) => {
+        if (typeof err.json === "function") {
+          const jsonErr = await err.json();
+          console.log(jsonErr.message);
+        } else {
+          console.log(err);
+        } 
+      });
+    });
+
   }
 
   /**
