@@ -310,8 +310,10 @@ async function validateNewAtendimento(atd) {
 }
 
 app.post('/api/tasks/sync/status', async (req, res) => {
-  // const unsyncedCallsIds = db.getUnsyncedCalls(); // to do: escrever método que pega lista de id de tarefas baseado na última sincronização dos chamados
-  const unsyncedCallsIds = [23452, 23039, 23318];
+  const status = await db.getAllStatus();
+  console.log(status);
+  const unsyncedCallTicketIds = await db.getUnsyncedCalls();
+  const ticketIds = unsyncedCallTicketIds.map((idObj) => idObj.ticket);
   const requestOptions = {
     method: 'POST',
     headers: {
@@ -319,19 +321,30 @@ app.post('/api/tasks/sync/status', async (req, res) => {
       'Authorization': 'Basic ' + Buffer.from(process.env.SORT_API_USER_KEY +":"+process.env.SORT_API_USER_SECRET).toString('base64'),
       'Origin': process.env.SORT_API_ORIGIN,
     },
-    body: JSON.stringify({task_ids: unsyncedCallsIds})
+    body: JSON.stringify({task_ids: ticketIds})
   };
   fetch(`${sortURL}/api/tasksStatuses.json`, requestOptions)
   .then(response => {
-    console.log(response);
     if (response.status == 200) {
       return response.json();
     } else {
       return Promise.reject(response);
     }
   })
-  .then((resp) => {
-    console.log(resp);
+  .then(async (resp) => {
+    // console.log(resp);
+    if (resp.length == 0) return;
+    let syncedAtds = [];
+    resp.forEach(async (task) => {
+      const newTaskStatus = task.Task.status_id;
+      const atendimentos_status = status.find((s) => s.sort_id == newTaskStatus);
+      // must check which calls where sync as some
+      // might have invalid ticket ids etc
+      const syncedAtendimentos = unsyncedCallTicketIds.filter((atds) => atds.ticket == task.Task.id);
+      syncedAtds = syncedAtds.concat(syncedAtendimentos);
+      await db.updateAtendimentoStatus(atendimentos_status.id, task.Task.id);
+    });
+    const sync_ret = await db.logAtendimentoSync(syncedAtds.map((atd) => atd.atendimento_id));
     res.json(resp)
   })
   .catch(async (error) => {

@@ -48,7 +48,7 @@ async function getClientById(id) {
 
 async function getAllStatus() {
   const statuses = await query(
-    `SELECT id, name FROM status`,
+    `SELECT id, name, sort_id FROM status`,
   );
   return statuses;
 }
@@ -281,6 +281,37 @@ async function getLog(id) {
   return log;
 }
 
+async function getUnsyncedCalls() {
+  const Unsynced = await query(
+    'SELECT a.id as atendimento_id, a.ticket FROM sync_atendimentos sa RIGHT JOIN atendimentos a ON a.id = sa.atendimento_id WHERE a.ticket IS NOT NULL AND (sa.last_sync IS NULL OR sa.last_sync < NOW() - INTERVAL 1 DAY) LIMIT 100'
+  );
+  return Unsynced;
+}
+
+async function updateAtendimentoStatus(status_id, ticket) {
+  const atendimentos = await query(
+    'UPDATE atendimentos SET status_id = ? WHERE ticket = ?',
+    [status_id, ticket]
+  );
+  return atendimentos;
+}
+
+async function logAtendimentoSync(atendimento_ids) {
+  let query_str = 'INSERT INTO sync_atendimentos (atendimento_id, last_sync) VALUES ';
+  let values = [];
+  atendimento_ids.forEach((id) => {
+    query_str += '(?, NOW()), ';
+    values.push(id);
+  });
+  query_str = query_str.substring(0, query_str.length - 2); // removes trailing comma and space
+  query_str += ' ON DUPLICATE KEY UPDATE atendimento_id=VALUES(atendimento_id), last_sync=VALUES(last_sync)';
+  const syncs = await query(
+    query_str,
+    values
+  );
+  return syncs;
+}
+
 module.exports = {
   auditLog,
   auditLogDetalhe,
@@ -297,5 +328,8 @@ module.exports = {
   countAtendimentos,
   insertAtendimento,
   updateAtendimento,
-  getAllStatus
+  updateAtendimentoStatus,
+  getAllStatus,
+  getUnsyncedCalls,
+  logAtendimentoSync
 }

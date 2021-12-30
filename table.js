@@ -394,7 +394,6 @@ class Table {
         return response.json();
       })
       .then((res) => {
-        btn.disabled = false;
         console.log(res);
       })
       .catch(async (err) => {
@@ -404,7 +403,10 @@ class Table {
         } else {
           console.log(err);
         } 
-      });
+      })
+      .finally(() => {
+        btn.disabled = false;
+      })
     });
 
   }

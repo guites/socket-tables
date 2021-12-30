@@ -63,6 +63,22 @@ CREATE TABLE auditlogdetalhes(id INT PRIMARY KEY AUTO_INCREMENT, log_id INT NOT 
 ALTER TABLE auditlogs ADD COLUMN criado_em DATETIME DEFAULT NOW();
 ```
 
+track status syncs
+
+```sql
+CREATE TABLE sync_atendimentos (atendimento_id int(11) PRIMARY KEY, last_sync DATETIME DEFAULT NOW(), FOREIGN KEY (atendimento_id) REFERENCES atendimentos(id), INDEX (atendimento_id));
+```
+
+add sort_id to status table
+
+```sql
+ALTER TABLE status ADD COLUMN sort_id INT(11) DEFAULT NULL;
+UPDATE status SET sort_id = 5 WHERE id = 1;
+UPDATE status SET sort_id = 6 WHERE id = 2;
+INSERT INTO status (name, sort_id) VALUES ('arquivado', 7);
+INSERT INTO status (name, sort_id) VALUES ('concluído', 2);
+```
+
 ##### Layout changes
 
 1. ~02/06/2021
