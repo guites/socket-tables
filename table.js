@@ -30,8 +30,8 @@ class Table {
 
     this.usuarios = [];
     this.statuses = [];
-    this.apiURL = 'http://192.168.0.106:3000/';
-    this.sortwebURL = 'http://sortweb.test';
+    this.apiURL = 'http://localhost:3000/';
+    this.sortwebURL = 'http://sort.guilhermegarcia.com';
     this.currentPage = 1;
     this.usuario = {};
   }
@@ -78,6 +78,44 @@ class Table {
     }
   }
 
+  updateStatusText(newStatus) {
+
+    var updated = document.getElementById(`dropdownMenuButton_${newStatus.id}`);
+
+    if (updated) {
+      // o atendimento atualizado está na página
+      updated.innerHTML = newStatus.status_name;
+      var dropdown_menu = updated.nextElementSibling;
+      var small = dropdown_menu.nextElementSibling;
+      if (small) {
+        small.innerHTML = "Atualizado.";
+        small.className = "d-block text-warning";
+      }
+      if (dropdown_menu) {
+        dropdown_menu.innerHTML = '';
+      }
+    }
+
+  }
+
+  emitAtualizaStatusBatch(statuses) {
+    
+    /**
+     * array com 
+     * status_id, atendimento_id
+    */
+
+    s.socket.emit('atualiza status batch', statuses);
+
+  }
+
+  handleAtualizaStatusBatch(newStatuses) {
+    newStatuses.forEach((status) => {
+      status.id = status.atendimento_id; //fix pra compatibilidade com o método abaixo
+      this.updateStatusText(status);
+    });
+  }
+
   emitAtualizaStatus(newStatus) {
 
     /**
@@ -95,23 +133,7 @@ class Table {
      * Lida com o recebimento da emitAtualizaStatus
      */
 
-    var updated = document.getElementById(`dropdownMenuButton_${newStatus.id}`);
-
-    if (updated) {
-      // o atendimento atualizado está na página
-      updated.innerHTML = newStatus.status_name;
-      var dropdown_menu = updated.nextElementSibling;
-      var small = dropdown_menu.nextElementSibling;
-      if (small) {
-        small.innerHTML = "Atualizado.";
-        small.className = "d-block text-warning";
-      }
-      if (dropdown_menu) {
-        dropdown_menu.innerHTML = '';
-      }
-    } else {
-      // o atendimento atualizado não está na página..
-    }
+    this.updateStatusText(newStatus);
 
   }
 
@@ -395,6 +417,7 @@ class Table {
       })
       .then((res) => {
         console.log(res);
+        // this.emitAtualizaStatusBatch(res);
       })
       .catch(async (err) => {
         if (typeof err.json === "function") {
@@ -523,7 +546,7 @@ class Table {
 
     var dropdown_menu = document.createElement("div");
     dropdown_menu.style.minWidth = 0;
-    dropdown_menu.style.maxWidth = "5rem";
+    dropdown_menu.style.maxWidth = "6rem";
     dropdown_menu.className = "dropdown-menu";
     dropdown_menu.setAttribute("aria-labelledby", "dropdownMenuButton");
 
@@ -1137,7 +1160,7 @@ class Table {
     } else {
 
       var td = document.createElement('td');
-      td.innerHTML = "<a target='_blank' href='https://app.sortweb.me/tasks/adminTaskView/" + cell + "'>" + cell + "</a>";
+      td.innerHTML = "<a target='_blank' href='"+this.sortwebURL+"/tasks/adminTaskView/" + cell + "'>" + cell + "</a>";
 
     }
 

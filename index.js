@@ -311,9 +311,9 @@ async function validateNewAtendimento(atd) {
 
 app.post('/api/tasks/sync/status', async (req, res) => {
   const status = await db.getAllStatus();
-  console.log(status);
   const unsyncedCallTicketIds = await db.getUnsyncedCalls();
   const ticketIds = unsyncedCallTicketIds.map((idObj) => idObj.ticket);
+  // console.log(unsyncedCallTicketIds);
   const requestOptions = {
     method: 'POST',
     headers: {
@@ -332,20 +332,59 @@ app.post('/api/tasks/sync/status', async (req, res) => {
     }
   })
   .then(async (resp) => {
-    // console.log(resp);
-    if (resp.length == 0) return;
+    console.log(resp);
+    if (resp.length == 0) return res.json(false);
     let syncedAtds = [];
+    let groupByStatus = {};
+    status.forEach(st => groupByStatus[st.id] = []);
     resp.forEach(async (task) => {
       const newTaskStatus = task.Task.status_id;
       const atendimentos_status = status.find((s) => s.sort_id == newTaskStatus);
+      if (!atendimentos_status) return;
       // must check which calls where sync as some
       // might have invalid ticket ids etc
       const syncedAtendimentos = unsyncedCallTicketIds.filter((atds) => atds.ticket == task.Task.id);
+      syncedAtendimentos.forEach((syncedAtd) => {
+        syncedAtd.status_id = atendimentos_status.id;
+        switch (parseInt(atendimentos_status.id)) {
+          case 1:
+            syncedAtd.status_name = "aberto";
+            break;
+          case 2:
+            syncedAtd.status_name = "fechado";
+            break;
+          case 3:
+            syncedAtd.status_name = "deletado";
+            break;
+          case 4:
+            syncedAtd.status_name = "arquivado";
+            break;
+          case 5:
+            syncedAtd.status_name = "concluído";
+            break;
+          default:
+            syncedAtd.status_name = "aberto";
+        }
+      });
       syncedAtds = syncedAtds.concat(syncedAtendimentos);
-      await db.updateAtendimentoStatus(atendimentos_status.id, task.Task.id);
+      groupByStatus[atendimentos_status.id].push(task.Task.id);
     });
+    const statusIds = Object.keys(groupByStatus);
+
+    for (let i = 0; i < statusIds.length; i++) {
+      if (groupByStatus[statusIds[i]].length > 0) {
+        await db.updateAtendimentoStatus(statusIds[i], groupByStatus[statusIds[i]]);
+      }
+    }
     const sync_ret = await db.logAtendimentoSync(syncedAtds.map((atd) => atd.atendimento_id));
-    res.json(resp)
+    
+    io.fetchSockets()
+    .then((sockets) => {
+      console.log(sockets);
+      sockets[0].emit("atualiza status batch", syncedAtds);
+    });
+
+    res.json(syncedAtds.length);
   })
   .catch(async (error) => {
     console.log(error);
@@ -495,12 +534,22 @@ io.on('connection', (socket) => {
   });
 
   socket.on('atualiza status', (newStatus) => {
+    console.log(newStatus);
     switch (parseInt(newStatus.status_id)) {
+      case 1:
+        newStatus.status_name = "aberto";
+        break;
       case 2:
         newStatus.status_name = "fechado";
         break;
       case 3:
         newStatus.status_name = "deletado";
+        break;
+      case 4:
+        newStatus.status_name = "arquivado";
+        break;
+      case 5:
+        newStatus.status_name = "concluído";
         break;
       default:
         newStatus.status_name = "aberto";

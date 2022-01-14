@@ -146,13 +146,13 @@
                 <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#accordionExample" style="">
                   <div class="accordion-body">
                     <p><strong>Utilize esta opção para atualizar o status dos chamados na planilha.</strong></p>
-                    <p>Os chamados terão seus <code>status</code> (aberto, concluído ou fechado) atualizados para refletir o status das tarefas às quais estiverem atrelados.</p>
+                    <p>Os chamados terão seus <code>status</code> atualizados para refletir o status das tarefas às quais estiverem atrelados.</p>
                     <p>Última sincronização de <code>status de chamado</code> ocorrida em <date>28/12/2021 às 13:52</date></p>
                     <button id="sync-status-chamados" type="button" class="btn btn-primary">Sincronizar chamados</button>
                   </div>
                 </div>
               </div>
-              <div class="accordion-item">
+              <!-- <div class="accordion-item">
                 <h2 class="accordion-header" id="headingTwo">
                   <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
                     Sincronizar cadastro de clientes
@@ -181,7 +181,7 @@
                     <button type="button" class="btn btn-primary">Sincronizar cadastro de usuários</button>
                   </div>
                 </div>
-              </div>
+              </div> -->
             </div>
           </div>
         </div>
@@ -533,6 +533,7 @@
       s.socket.on('add ticket', (addedTicket) => table.handleAddTicket(addedTicket));
       s.socket.on('atualiza status', (newStatus) => table.handleAtualizaStatus(newStatus));
       s.socket.on('log', (log) => table.appendLog(log, document.querySelector('#audit-logs-list ul')));
+      s.socket.on('atualiza status batch', (newStatuses) => table.handleAtualizaStatusBatch(newStatuses));
 
       // cacheia seletores usados mais de uma vez
 

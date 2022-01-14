@@ -289,9 +289,13 @@ async function getUnsyncedCalls() {
 }
 
 async function updateAtendimentoStatus(status_id, ticket) {
+  const placeholders = '?,'.repeat(ticket.length).slice(0,-1);
+  const query_str = 'UPDATE atendimentos SET status_id = ? WHERE ticket IN (' + placeholders + ')';
+  const values = [String(status_id)].concat(ticket);
+  console.log(ticket, query_str, values);
   const atendimentos = await query(
-    'UPDATE atendimentos SET status_id = ? WHERE ticket = ?',
-    [status_id, ticket]
+    query_str,
+    values
   );
   return atendimentos;
 }
@@ -299,17 +303,21 @@ async function updateAtendimentoStatus(status_id, ticket) {
 async function logAtendimentoSync(atendimento_ids) {
   let query_str = 'INSERT INTO sync_atendimentos (atendimento_id, last_sync) VALUES ';
   let values = [];
-  atendimento_ids.forEach((id) => {
-    query_str += '(?, NOW()), ';
-    values.push(id);
-  });
-  query_str = query_str.substring(0, query_str.length - 2); // removes trailing comma and space
-  query_str += ' ON DUPLICATE KEY UPDATE atendimento_id=VALUES(atendimento_id), last_sync=VALUES(last_sync)';
-  const syncs = await query(
-    query_str,
-    values
-  );
-  return syncs;
+  if (atendimento_ids.length > 0) {
+    atendimento_ids.forEach((id) => {
+      query_str += '(?, NOW()), ';
+      values.push(id);
+    });
+    query_str = query_str.substring(0, query_str.length - 2); // removes trailing comma and space
+    query_str += ' ON DUPLICATE KEY UPDATE atendimento_id=VALUES(atendimento_id), last_sync=VALUES(last_sync)';
+    console.log(query_str, values);
+    const syncs = await query(
+      query_str,
+      values
+    );
+    return syncs;
+  }
+  return false;
 }
 
 module.exports = {
